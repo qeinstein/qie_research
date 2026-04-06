@@ -20,7 +20,6 @@ This repository assumes three experienced Git users collaborating through a stri
 
 Every Pull Request must include:
 
-- A linked GitHub Issue.
 - A concise statement of the scientific or operational objective.
 - A summary of changed files and affected directories.
 - A note describing how reproducibility was preserved.

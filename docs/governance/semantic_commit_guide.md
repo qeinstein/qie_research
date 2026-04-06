@@ -38,17 +38,6 @@ Examples:
 - If the change affects scientific interpretation, explain the rationale in the commit body.
 - If the commit closes or advances a repository record, mention the record path or record ID in the body.
 
-## Recommended Scope Examples
-
-- `encodings`
-- `baselines`
-- `ntk`
-- `statistics`
-- `manuscript`
-- `results`
-- `metadata`
-- `bibtex`
-- `reviewer-response`
 
 ## Examples By Scenario
 
@@ -69,4 +58,3 @@ infra(repo): initialize governance and manuscript scaffold
 - `fix`
 - `update manuscript and code and refs`
 
-These messages destroy the review trail and make it difficult to reconstruct how a scientific claim changed over time.

@@ -37,12 +37,7 @@ The repository is organized for a three-person team operating through versioned 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [EXECUTION_PLAN.md](EXECUTION_PLAN.md)
 - [STRUCTURE.md](STRUCTURE.md)
-- [records/README.md](records/README.md)
-- [logging_protocol.md](docs/governance/logging_protocol.md)
-- [semantic_commit_guide.md](docs/governance/semantic_commit_guide.md)
 - [phase_outcome_matrix.md](docs/governance/phase_outcome_matrix.md)
-- [peer_review_protocol.md](docs/governance/peer_review_protocol.md)
-- [reference_library_maintenance.md](docs/governance/reference_library_maintenance.md)
 
 ## Planned Study Stages
 

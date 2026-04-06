@@ -1,6 +1,6 @@
 # Repository Structure
 
-This is the simplified first-paper structure. It keeps only the folders that are useful before the project has real data, experiments, code, and manuscript drafts.
+This is the final first-paper structure. It keeps the folders expected to be useful for this project so the team does not need to add new folders later.
 
 ## Tree
 
@@ -13,7 +13,7 @@ This is the simplified first-paper structure. It keeps only the folders that are
 |   |-- processed/            Model-ready data generated from code and configs. Large files are ignored.
 |   |-- metadata/             Tracked dataset notes, provenance, checksums, and schemas.
 |-- docs/                     Project plans and governance documents.
-|   |-- governance/           Logging, commit, review, reference, and phase protocols.
+|   |-- governance/           Logging, commit, review, reference, phase protocols, and record templates.
 |-- manuscript/               Drafts, LaTeX, figures, tables, and submission material as they appear.
 |-- references/               Bibliography, reference PDFs, and reading notes.
 |   |-- bibtex/               Canonical BibTeX file.
@@ -32,13 +32,10 @@ This is the simplified first-paper structure. It keeps only the folders that are
 |       |-- pipelines/         Data, training, evaluation, and reporting workflows.
 |       |-- utils/             Shared helpers.
 |-- tests/                    Tests and small fixtures.
-|-- records/                  Repository-native records for phases, experiments, decisions, meetings, and risks.
+|-- records/                  Repository-native records for phases, experiments, and decisions.
 |   |-- phases/               Formal phase outcome records.
 |   |-- experiments/          Experiment registration and run-family records.
 |   |-- decisions/            Scope, method, dataset, narrative, or tooling decisions.
-|   |-- meetings/             Meeting agendas, decisions, and action items.
-|   |-- risks/                Scientific, compute, operational, and reproducibility risks.
-|   |-- templates/            Copyable Markdown templates for record types.
 ```
 
 ## Root Files
@@ -51,11 +48,11 @@ This is the simplified first-paper structure. It keeps only the folders that are
 
 ## Rules
 
-- Keep the tree simple until real work justifies new folders.
+- Keep this tree stable unless a strong project requirement forces a change.
 - Do not add new top-level folders without a clear reason.
 - Put general plans and process documents in `docs/`.
 - Put all reusable scientific code under `src/qie_research/`.
-- Put raw data, processed data, and generated logs in their existing folders, but keep large files out of Git.
+- Put raw data, processed data, and generated logs in purpose-specific folders when they exist, but keep large files out of Git.
 - Put compact, paper-relevant outputs in `results/`.
 - Put manuscript source and draft material in `manuscript/`.
 - Put operational records in `records/`.

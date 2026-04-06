@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Repository records are the authoritative operational log for this project. Every milestone, phase outcome, experiment family, meeting decision, and blocking problem must be traceable through a Markdown record under `records/`.
+Repository records are the authoritative operational log for this project. Every milestone, phase outcome, experiment family, and major methodological decision must be traceable through a Markdown record under `records/`.
 
 Local scratch notes are allowed during work, but a record committed under `records/` is the only project memory assumed to persist.
 
@@ -10,11 +10,9 @@ Local scratch notes are allowed during work, but a record committed under `recor
 
 - `phase-outcome`: Used to close a planned research phase with evidence. Store under `records/phases/`.
 - `experiment-run`: Used to register, monitor, and summarize experimental runs or run families. Store under `records/experiments/`.
-- `meeting-note`: Used to capture agendas, decisions, and action items from team meetings. Store under `records/meetings/`.
 - `decision`: Used when methodology, datasets, narrative framing, or tooling policy changes. Store under `records/decisions/`.
-- `risk`: Used when scientific, computational, or operational risks need explicit mitigation. Store under `records/risks/`.
 
-Copy templates from `records/templates/` when creating new records.
+Copy templates from `docs/governance/*_template.md` when creating new records.
 
 ## Required Metadata
 
@@ -37,17 +35,13 @@ Use one of the following title patterns:
 - `[PHASE 2] Encoding numerics verified before training`
 - `[EXP][fashion-mnist][angle] matched-budget sweep`
 - `[EXP][synthetic-high-rank-noise][amplitude] NTK stress test`
-- `[MEETING][2026-01-29] weekly synchronization`
 - `[DECISION][2026-02-03] dataset freeze criteria`
-- `[RISK][2026-02-10] encoding overhead exceeds training budget`
 
 Use one of the following filename patterns:
 
 - `records/phases/phase-0-scope-lock.md`
 - `records/experiments/2026-02-03-fashion-mnist-angle-sweep.md`
-- `records/meetings/2026-01-29-weekly-synchronization.md`
 - `records/decisions/2026-02-03-dataset-freeze-criteria.md`
-- `records/risks/2026-02-10-encoding-overhead.md`
 
 ## Record Body Requirements
 
@@ -70,17 +64,9 @@ Use one of the following filename patterns:
 - Expected outputs.
 - Runtime and overhead tracking plan.
 
-### For `meeting-note`
-
-- Attendees.
-- Agenda.
-- Decisions made.
-- Action items with owners and due dates.
-- Follow-up records or Pull Requests created.
-
 ## Lifecycle Rules
 
-1. Create the record before work starts when the work affects a phase outcome, experiment, decision, meeting, or risk.
+1. Create the record before work starts when the work affects a phase outcome, experiment, or decision.
 2. Keep the main body updated rather than scattering status across disconnected notes.
 3. Use dated entries only for timestamped milestones, review requests, or final evidence.
 4. Link every merged Pull Request back to the relevant record.

@@ -4,7 +4,7 @@ This repository assumes three experienced Git users collaborating through a stri
 
 ## Feature Branch Workflow
 
-1. Create or claim a repository record under `records/` before work starts when the work affects a phase outcome, experiment, decision, meeting, or risk.
+1. Create or claim a repository record under `records/` before work starts when the work affects a phase outcome, experiment, or decision.
 2. Create a branch from the latest `main` using a scoped name:
    - `code/<record-id>-<short-topic>`
    - `text/<record-id>-<section-name>`
@@ -49,7 +49,7 @@ Every Pull Request must include:
 
 ## Experiment and Data Rules
 
-- Register planned runs in `records/experiments/` before starting long experiments.
+- Register planned runs in `records/` before starting long experiments.
 - Commit configuration, manifests, metadata, summary metrics, and publication-ready outputs.
 - Do not commit raw datasets, caches, checkpoints, or heavyweight intermediate tensors.
 - If encoding overhead exceeds training cost, document that explicitly in the linked experiment record and result summary.

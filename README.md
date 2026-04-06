@@ -27,7 +27,7 @@ The repository is organized for a three-person team operating through versioned 
 ## Repository Operating Rules
 
 - `main` is protected and receives changes only through reviewed Pull Requests.
-- Every meaningful task starts from a repository record when it affects scope, experiments, decisions, risks, or phase closure, and ends with linked evidence in a Pull Request.
+- Every meaningful task starts from a repository record when it affects scope, experiments, decisions, or phase closure, and ends with linked evidence in a Pull Request.
 - Manuscript edits, code edits, data-provenance updates, and bibliography changes all follow semantic commit rules.
 - Raw and processed data are logged through manifests and metadata, not committed as large binaries.
 - Publication-ready figures, tables, and summary metrics are committed; caches, checkpoints, and transient logs are not.

@@ -13,4 +13,4 @@ Every experiment should map to a GitHub Issue and, when runnable, a config path 
 - Track encoding wall-clock and memory overhead separately from model-training cost.
 - Flag any case where encoding overhead is large enough to undermine practical usefulness.
 
-The root execution plan is in [EXECUTION_PLAN.md](/home/fluxx/Workspace/qie_research/EXECUTION_PLAN.md). The focused benchmark rules are in [benchmark_execution_plan.md](/home/fluxx/Workspace/qie_research/docs/benchmark_execution_plan.md).
+The root execution plan is in [EXECUTION_PLAN.md](../EXECUTION_PLAN.md). The focused benchmark rules are in [benchmark_execution_plan.md](benchmark_execution_plan.md).

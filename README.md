@@ -34,14 +34,14 @@ The repository is organized for a three-person team operating entirely through G
 
 ## Core Governance Documents
 
-- [CONTRIBUTING.md](/home/fluxx/Workspace/qie_research/CONTRIBUTING.md)
-- [EXECUTION_PLAN.md](/home/fluxx/Workspace/qie_research/EXECUTION_PLAN.md)
-- [STRUCTURE.md](/home/fluxx/Workspace/qie_research/STRUCTURE.md)
-- [logging_protocol.md](/home/fluxx/Workspace/qie_research/docs/governance/logging_protocol.md)
-- [semantic_commit_guide.md](/home/fluxx/Workspace/qie_research/docs/governance/semantic_commit_guide.md)
-- [phase_outcome_matrix.md](/home/fluxx/Workspace/qie_research/docs/governance/phase_outcome_matrix.md)
-- [peer_review_protocol.md](/home/fluxx/Workspace/qie_research/docs/governance/peer_review_protocol.md)
-- [reference_library_maintenance.md](/home/fluxx/Workspace/qie_research/docs/governance/reference_library_maintenance.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [EXECUTION_PLAN.md](EXECUTION_PLAN.md)
+- [STRUCTURE.md](STRUCTURE.md)
+- [logging_protocol.md](docs/governance/logging_protocol.md)
+- [semantic_commit_guide.md](docs/governance/semantic_commit_guide.md)
+- [phase_outcome_matrix.md](docs/governance/phase_outcome_matrix.md)
+- [peer_review_protocol.md](docs/governance/peer_review_protocol.md)
+- [reference_library_maintenance.md](docs/governance/reference_library_maintenance.md)
 
 ## Planned Study Stages
 
@@ -53,7 +53,7 @@ The repository is organized for a three-person team operating entirely through G
 6. NTK, CKA, rank, conditioning, and overhead analysis.
 7. Drafting, reviewer hardening, and submission packaging.
 
-The root execution plan is specified in [EXECUTION_PLAN.md](/home/fluxx/Workspace/qie_research/EXECUTION_PLAN.md). The focused benchmark rules are also maintained in [benchmark_execution_plan.md](/home/fluxx/Workspace/qie_research/docs/benchmark_execution_plan.md).
+The root execution plan is specified in [EXECUTION_PLAN.md](EXECUTION_PLAN.md). The focused benchmark rules are also maintained in [benchmark_execution_plan.md](docs/benchmark_execution_plan.md).
 
 ## Repository Expectations
 

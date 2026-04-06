@@ -38,7 +38,7 @@ Every Pull Request must include:
 
 ## Commit Discipline
 
-- Follow the semantic commit scheme in [semantic_commit_guide.md](/home/fluxx/Workspace/qie_research/docs/governance/semantic_commit_guide.md).
+- Follow the semantic commit scheme in [semantic_commit_guide.md](docs/governance/semantic_commit_guide.md).
 - Reference the relevant issue number in the commit body when the issue is not already obvious from the branch name.
 - Avoid mixing manuscript wording, code logic, and bibliography updates in the same commit unless they are inseparable.
 
@@ -57,7 +57,7 @@ Every Pull Request must include:
 
 ## Reference Library Rules
 
-- Follow [reference_library_maintenance.md](/home/fluxx/Workspace/qie_research/docs/governance/reference_library_maintenance.md) for every bibliography or PDF update.
+- Follow [reference_library_maintenance.md](docs/governance/reference_library_maintenance.md) for every bibliography or PDF update.
 - Bibliography-only changes should use a dedicated `ref/` branch unless the citation is inseparable from a manuscript claim.
 
 ## Branch Protection Expectations

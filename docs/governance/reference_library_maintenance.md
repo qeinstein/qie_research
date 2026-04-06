@@ -3,8 +3,7 @@
 ## Canonical Files
 
 - Canonical bibliography: `references/bibtex/project_library.bib`
-- Reference PDFs: `references/pdf_library/`
-- Reading notes: `references/reading_notes/`
+- Reading notes and PDF source details: `references/reading_notes/`
 - Screening decisions: record in `references/reading_notes/` unless the literature review grows large enough to justify a separate screening log.
 
 ## Citation Key Standard
@@ -25,7 +24,7 @@ Pick one casing convention and keep it stable. Do not rename existing keys casua
 
 ## PDF Naming Standard
 
-Store PDFs as:
+If you keep local PDFs outside the repository, store them as:
 
 ```text
 FirstAuthorYear-ShortTitle.pdf
@@ -36,7 +35,7 @@ Examples:
 - `Schuld2021-QuantumKernels.pdf`
 - `Rahimi2007-RandomFeatures.pdf`
 
-If a PDF is too large or legally restricted, do not commit it. Instead, record its source, DOI, and access instructions in `references/reading_notes/`.
+Do not rely on committed PDF copies. Record each paper's source, DOI, and access instructions in `references/reading_notes/`.
 
 ## Merge-Conflict Prevention Rules
 
@@ -49,7 +48,7 @@ If a PDF is too large or legally restricted, do not commit it. Instead, record i
 ## Required Steps for Adding a Reference
 
 1. Add the BibTeX entry to `project_library.bib`.
-2. Add the PDF if legally and practically appropriate.
+2. Record the PDF source or local access instructions in `references/reading_notes/`.
 3. Add a reading note file or extend an existing note when the paper materially affects the project.
 4. Mention the citation key in the Pull Request description.
 5. If the paper changes project direction, open a decision record.

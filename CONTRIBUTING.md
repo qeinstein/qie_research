@@ -43,7 +43,7 @@ Every Pull Request must include:
 
 ## Manuscript Rules
 
-- Keep manuscript source and draft material in `manuscript/`. Add format-specific subfolders later only if the team needs that split.
+- Keep manuscript source and draft material in a dedicated workspace rather than scattering prose files across the repository. Add repository paths later only when the team needs them.
 - Keep one section or one argument revision per Pull Request whenever possible.
 - If a result table changes a claim, update the corresponding manuscript section, results artifact, and repository record in the same branch.
 

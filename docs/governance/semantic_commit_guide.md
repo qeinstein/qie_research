@@ -22,7 +22,7 @@ Examples:
 | `code` | Source code changes affecting analysis, encodings, baselines, pipelines, or utilities |
 | `text` | Manuscript text, notes, or prose-driven documents |
 | `data` | Data manifests, provenance, checksums, schema notes, or small tracked metadata changes |
-| `ref` | BibTeX updates, reference PDFs, reading notes, citation cleanup |
+| `ref` | BibTeX updates, reference-source notes, reading notes, citation cleanup |
 | `fix` | Bug fixes, numerical corrections, reproducibility fixes, or claim-correcting edits |
 | `exp` | Experiment registration, run configuration, result collation, or ablation bookkeeping |
 | `infra` | Environment, CI, repository structure, tooling, or configuration scaffolding |
@@ -57,7 +57,7 @@ code(ntk): add matched-budget kernel trace estimator
 exp(stress-tests): register high-rank-noise benchmark grid
 fix(training): correct seed leakage in evaluation loop
 text(methods): specify classical overhead accounting rule
-ref(pdf-library): add QIE and kernel baseline source papers
+ref(reading-notes): add QIE and kernel baseline source papers
 infra(repo): initialize governance and manuscript scaffold
 ```
 

@@ -1,29 +1,23 @@
 # Repository Structure
 
-This is the final first-paper structure. It keeps the folders expected to be useful for this project so the team does not need to add new folders later.
+This is the current tracked repository structure. Add new folders only when real project artifacts require them.
 
 ## Tree
 
 ```text
 .
 |-- .github/                  Pull Request templates.
-|-- configs/                  Experiment and run configuration files.
 |-- data/                     Dataset storage and dataset provenance.
 |   |-- raw/                  Original source-aligned data. Large files are ignored.
-|   |-- processed/            Model-ready data generated from code and configs. Large files are ignored.
+|   |-- processed/            Model-ready data generated from code and tracked run metadata. Large files are ignored.
 |   |-- metadata/             Tracked dataset notes, provenance, checksums, and schemas.
 |-- docs/                     Project plans and governance documents.
 |   |-- governance/           Logging, commit, review, reference, phase protocols, and record templates.
-|-- manuscript/               Drafts, LaTeX, figures, tables, and submission material as they appear.
-|-- references/               Bibliography, reference PDFs, and reading notes.
+|-- references/               Bibliography and reading notes.
 |   |-- bibtex/               Canonical BibTeX file.
-|   |-- pdf_library/          Reference PDFs when legal and practical to store.
-|   |-- reading_notes/        Notes keyed by citation or paper topic.
+|   |-- reading_notes/        Notes keyed by citation or paper topic, including PDF source details when needed.
 |-- results/                  Reviewable outputs from experiments and analysis.
-|   |-- figures/              Figures for drafts, reports, and the final paper.
-|   |-- tables/               Result tables.
 |   |-- metrics/              Metric summaries, NTK summaries, statistical tests, and compact CSV outputs.
-|   |-- logs/                 Runtime, profiling, and evaluation logs. Large logs are ignored.
 |-- src/                      Project source code.
 |   |-- qie_research/         Importable Python package.
 |       |-- analysis/          Benchmark analysis, NTK analysis, representation metrics, and statistics.
@@ -54,5 +48,5 @@ This is the final first-paper structure. It keeps the folders expected to be use
 - Put all reusable scientific code under `src/qie_research/`.
 - Put raw data, processed data, and generated logs in purpose-specific folders when they exist, but keep large files out of Git.
 - Put compact, paper-relevant outputs in `results/`.
-- Put manuscript source and draft material in `manuscript/`.
+- Track manuscript-facing claims and prose changes through records, reviews, and linked result artifacts until a dedicated manuscript workspace is added.
 - Put operational records in `records/`.

@@ -22,9 +22,8 @@ Record output dimension, parameter cap, or comparable budget definition.
 ## Expected Outputs
 
 - `results/metrics/...`
-- `results/tables/...`
-- `results/figures/...`
-- `results/logs/...`
+- `results/...` for any additional compact tracked artifacts produced by the run
+- Linked log locations or external run reports when runtime logs are too large for Git
 
 ## Overhead Accounting Plan
 

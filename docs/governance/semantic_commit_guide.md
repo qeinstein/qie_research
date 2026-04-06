@@ -36,7 +36,7 @@ Examples:
 - Keep subject lines under about 72 characters when practical.
 - Use the imperative mood: `add`, `fix`, `record`, `freeze`, `compare`, `remove`.
 - If the change affects scientific interpretation, explain the rationale in the commit body.
-- If the commit closes or advances an issue, mention the issue number in the body.
+- If the commit closes or advances a repository record, mention the record path or record ID in the body.
 
 ## Recommended Scope Examples
 

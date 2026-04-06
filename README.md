@@ -6,7 +6,7 @@ Research proposal date: January 26, 2026
 
 This project investigates whether quantum-inspired feature encodings (QIE), specifically amplitude, angle, and basis encodings, provide measurable advantages as explicit high-dimensional representations inside fully classical machine learning pipelines. The central goal is to separate representational effects from hardware claims by benchmarking QIE against strong classical baselines under matched architecture, feature-budget, and optimization constraints. In addition to predictive performance, the study evaluates information preservation, spectral structure, effective rank, conditioning, centered kernel alignment, neural tangent kernel behavior, convergence stability, and classical overhead. The benchmark suite is designed to include non-trivial tabular data, image classification, and at least one stress-test dataset with high-rank noise or high intrinsic dimensionality so that any observed gains are tested under realistic representational pressure rather than simple accuracy-only settings.
 
-The repository is organized for a three-person team operating entirely through GitHub. All project management, experiment logging, manuscript development, citation maintenance, and review decisions are recorded through GitHub Issues and Pull Requests, with tracked artifacts and explicit verification criteria. Large datasets, cached encodings, and heavyweight model artifacts are intentionally excluded from Git history; instead, provenance, checksums, manifests, and summary outputs are versioned so the full workflow remains reproducible and reviewable.
+The repository is organized for a three-person team operating through versioned repository records and reviewed Pull Requests. Project management, experiment logging, manuscript development, citation maintenance, and review decisions are recorded under `records/` and linked from Pull Requests, with tracked artifacts and explicit verification criteria. Large datasets, cached encodings, and heavyweight model artifacts are intentionally excluded from Git history; instead, provenance, checksums, manifests, and summary outputs are versioned so the full workflow remains reproducible and reviewable.
 
 ## Research Focus
 
@@ -27,7 +27,7 @@ The repository is organized for a three-person team operating entirely through G
 ## Repository Operating Rules
 
 - `main` is protected and receives changes only through reviewed Pull Requests.
-- Every meaningful task starts from a GitHub Issue and ends with linked evidence in a Pull Request.
+- Every meaningful task starts from a repository record when it affects scope, experiments, decisions, risks, or phase closure, and ends with linked evidence in a Pull Request.
 - Manuscript edits, code edits, data-provenance updates, and bibliography changes all follow semantic commit rules.
 - Raw and processed data are logged through manifests and metadata, not committed as large binaries.
 - Publication-ready figures, tables, and summary metrics are committed; caches, checkpoints, and transient logs are not.
@@ -37,6 +37,7 @@ The repository is organized for a three-person team operating entirely through G
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [EXECUTION_PLAN.md](EXECUTION_PLAN.md)
 - [STRUCTURE.md](STRUCTURE.md)
+- [records/README.md](records/README.md)
 - [logging_protocol.md](docs/governance/logging_protocol.md)
 - [semantic_commit_guide.md](docs/governance/semantic_commit_guide.md)
 - [phase_outcome_matrix.md](docs/governance/phase_outcome_matrix.md)
@@ -57,7 +58,7 @@ The root execution plan is specified in [EXECUTION_PLAN.md](EXECUTION_PLAN.md). 
 
 ## Repository Expectations
 
-- Use feature branches with issue-linked names.
+- Use feature branches with record-linked names when a repository record exists.
 - Keep one scientific claim or implementation concern per Pull Request.
-- Record final phase outcomes in GitHub Issues before merging summary manuscripts or result tables.
+- Record final phase outcomes in `records/phases/` before merging summary manuscripts or result tables.
 - Treat negative or equivalence outcomes as valid research endpoints rather than fallback narratives.

@@ -2,7 +2,7 @@
 
 ## Policy
 
-Every change to the manuscript or codebase must be merged through a Pull Request reviewed by at least one teammate. This is mandatory, even for small wording fixes, unless the repository is temporarily inaccessible and the team has explicitly documented an exception in GitHub.
+Every change to the manuscript or codebase must be merged through a Pull Request reviewed by at least one teammate. This is mandatory, even for small wording fixes, unless the repository is temporarily inaccessible and the team has explicitly documented an exception in a repository record.
 
 ## Minimum Review Standard
 
@@ -10,7 +10,7 @@ Before merge, the Pull Request must have:
 
 - One approval from a teammate who is not the author.
 - No unresolved blocking comments.
-- A linked issue.
+- A linked repository record when the change has one.
 - Updated documentation when workflow, claims, or structure changed.
 - Evidence that tests, validations, or manuscript consistency checks were performed where relevant.
 
@@ -40,14 +40,14 @@ Authors must:
 ### Manuscript Pull Requests
 
 - Summarize the argument-level change, not just the file diff.
-- Link every changed claim to the affected figure, table, or result issue.
+- Link every changed claim to the affected figure, table, or experiment record.
 - If a result is provisional, label it clearly in both the Pull Request and manuscript text.
 
 ### Code Pull Requests
 
 - State whether the change affects numerical results, runtime, determinism, or artifact format.
 - Add or update tests when the logic could alter scientific conclusions.
-- Call out any change that could invalidate previous results and open follow-up issues if reruns are required.
+- Call out any change that could invalidate previous results and open follow-up records if reruns are required.
 
 ### Protocol or Governance Pull Requests
 

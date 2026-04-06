@@ -6,7 +6,7 @@ This is the simplified first-paper structure. It keeps only the folders that are
 
 ```text
 .
-|-- .github/                  GitHub issue and Pull Request templates.
+|-- .github/                  Pull Request templates.
 |-- configs/                  Experiment and run configuration files.
 |-- data/                     Dataset storage and dataset provenance.
 |   |-- raw/                  Original source-aligned data. Large files are ignored.
@@ -32,13 +32,20 @@ This is the simplified first-paper structure. It keeps only the folders that are
 |       |-- pipelines/         Data, training, evaluation, and reporting workflows.
 |       |-- utils/             Shared helpers.
 |-- tests/                    Tests and small fixtures.
+|-- records/                  Repository-native records for phases, experiments, decisions, meetings, and risks.
+|   |-- phases/               Formal phase outcome records.
+|   |-- experiments/          Experiment registration and run-family records.
+|   |-- decisions/            Scope, method, dataset, narrative, or tooling decisions.
+|   |-- meetings/             Meeting agendas, decisions, and action items.
+|   |-- risks/                Scientific, compute, operational, and reproducibility risks.
+|   |-- templates/            Copyable Markdown templates for record types.
 ```
 
 ## Root Files
 
 - `README.md`: project overview, abstract, and operating rules.
 - `EXECUTION_PLAN.md`: the main eight-week execution plan.
-- `CONTRIBUTING.md`: GitHub workflow and review rules.
+- `CONTRIBUTING.md`: Git workflow and review rules.
 - `STRUCTURE.md`: this folder map.
 - `.gitignore`: prevents large data, secrets, caches, and build artifacts from entering Git.
 
@@ -51,3 +58,4 @@ This is the simplified first-paper structure. It keeps only the folders that are
 - Put raw data, processed data, and generated logs in their existing folders, but keep large files out of Git.
 - Put compact, paper-relevant outputs in `results/`.
 - Put manuscript source and draft material in `manuscript/`.
+- Put operational records in `records/`.

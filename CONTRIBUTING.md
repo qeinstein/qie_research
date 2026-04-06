@@ -1,16 +1,16 @@
 # Contributing Guide
 
-This repository assumes three experienced Git users collaborating through a strict feature-branch workflow. All changes flow through GitHub Issues, branches, commits, Pull Requests, and review records. Direct commits to `main` are not permitted.
+This repository assumes three experienced Git users collaborating through a strict feature-branch workflow. Traceable work flows through repository records, branches, commits, Pull Requests, and review records. Direct commits to `main` are not permitted.
 
 ## Feature Branch Workflow
 
-1. Open or claim a GitHub Issue before writing code, editing the manuscript, changing references, or updating protocols.
+1. Create or claim a repository record under `records/` before work starts when the work affects a phase outcome, experiment, decision, meeting, or risk.
 2. Create a branch from the latest `main` using a scoped name:
-   - `code/<issue-id>-<short-topic>`
-   - `text/<issue-id>-<section-name>`
-   - `exp/<issue-id>-<dataset>-<encoding>`
-   - `ref/<issue-id>-<citation-topic>`
-   - `fix/<issue-id>-<problem>`
+   - `code/<record-id>-<short-topic>`
+   - `text/<record-id>-<section-name>`
+   - `exp/<record-id>-<dataset>-<encoding>`
+   - `ref/<record-id>-<citation-topic>`
+   - `fix/<record-id>-<problem>`
 3. Keep the branch focused on one logical outcome. Split unrelated edits into separate branches and Pull Requests.
 4. Push early and open a draft Pull Request once the work has a visible direction.
 5. Rebase onto `main` before requesting final review so reviewers read the actual merge candidate.
@@ -38,21 +38,21 @@ Every Pull Request must include:
 ## Commit Discipline
 
 - Follow the semantic commit scheme in [semantic_commit_guide.md](docs/governance/semantic_commit_guide.md).
-- Reference the relevant issue number in the commit body when the issue is not already obvious from the branch name.
+- Reference the relevant record path or record ID in the commit body when it is not already obvious from the branch name.
 - Avoid mixing manuscript wording, code logic, and bibliography updates in the same commit unless they are inseparable.
 
 ## Manuscript Rules
 
 - Keep manuscript source and draft material in `manuscript/`. Add format-specific subfolders later only if the team needs that split.
 - Keep one section or one argument revision per Pull Request whenever possible.
-- If a result table changes a claim, update the corresponding manuscript section, results artifact, and GitHub Issue in the same branch.
+- If a result table changes a claim, update the corresponding manuscript section, results artifact, and repository record in the same branch.
 
 ## Experiment and Data Rules
 
-- Register planned runs in GitHub Issues before starting long experiments.
+- Register planned runs in `records/experiments/` before starting long experiments.
 - Commit configuration, manifests, metadata, summary metrics, and publication-ready outputs.
 - Do not commit raw datasets, caches, checkpoints, or heavyweight intermediate tensors.
-- If encoding overhead exceeds training cost, document that explicitly in the linked issue and result summary.
+- If encoding overhead exceeds training cost, document that explicitly in the linked experiment record and result summary.
 
 ## Reference Library Rules
 

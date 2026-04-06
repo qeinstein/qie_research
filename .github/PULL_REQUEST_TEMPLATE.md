@@ -2,9 +2,9 @@
 
 Describe the scientific or operational goal of this Pull Request.
 
-## Linked Issue
+## Related Records
 
-- Closes #
+- `records/...`
 
 ## What Changed
 
@@ -23,10 +23,9 @@ Describe the scientific or operational goal of this Pull Request.
 ## Checklist
 
 - [ ] The branch is scoped to one logical outcome.
-- [ ] A GitHub Issue is linked.
+- [ ] Related repository records are linked, or this Pull Request explains why none are needed.
 - [ ] Commit messages follow the semantic commit guide.
 - [ ] Relevant docs or manuscript text were updated alongside changed behavior.
 - [ ] New or changed results are traceable to configs and artifact paths.
 - [ ] I requested review from at least one teammate.
 - [ ] I followed the reference maintenance protocol if citations changed.
-

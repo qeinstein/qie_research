@@ -32,7 +32,7 @@ Equivalence and negative results are valid endpoints, not fallback narratives.
 - Angle encoding.
 - Basis encoding.
 
-No new encodings are added after Phase 0 unless a decision issue explicitly reopens scope.
+No new encodings are added after Phase 0 unless a decision record explicitly reopens scope.
 
 ### Classical Baselines
 
@@ -57,7 +57,7 @@ Pruning rules:
 
 - Drop datasets where a linear model exceeds 95 percent performance unless the dataset is retained only as a smoke test.
 - Drop datasets where no method beats random chance plus a documented tolerance.
-- Do not remove the high-rank or high-intrinsic-dimensional stress test without replacing it and opening a decision issue.
+- Do not remove the high-rank or high-intrinsic-dimensional stress test without replacing it and opening a decision record.
 
 ## Required Metrics
 
@@ -133,7 +133,7 @@ Deliverables:
 - Frozen encoding list.
 - Frozen baseline list.
 - Frozen fairness rules.
-- GitHub issue for Phase 0 closure.
+- Repository phase record for Phase 0 closure at `records/phases/phase-0-scope-lock.md`.
 
 ### Week 1: Infrastructure and Determinism
 
@@ -256,7 +256,7 @@ Tasks:
 
 - Export publication-quality vector figures where possible.
 - Freeze final tables.
-- Clean GitHub issues and Pull Requests.
+- Clean repository records and Pull Requests.
 - Confirm reference library consistency.
 - Prepare submission or arXiv package.
 

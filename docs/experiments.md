@@ -1,8 +1,8 @@
 # Experiment Planning
 
-Use GitHub Issues, `configs/`, and this document for experiment planning records, not heavyweight outputs. Keep experiment planning simple until real files justify more structure.
+Use `records/experiments/`, `configs/`, and this document for experiment planning records, not heavyweight outputs. Keep experiment planning simple until real files justify more structure.
 
-Every experiment should map to a GitHub Issue and, when runnable, a config path under `configs/`.
+Every experiment should map to a repository record under `records/experiments/` and, when runnable, a config path under `configs/`.
 
 ## Minimum Requirements For Any Benchmark Family
 

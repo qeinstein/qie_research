@@ -10,7 +10,7 @@ Do amplitude, angle, or basis quantum-inspired feature encodings provide a meani
 
 ### 1. Fair Comparison
 
-Every major comparison must satisfy all of the following unless an exception is opened as a documented decision issue:
+Every major comparison must satisfy all of the following unless an exception is opened as a documented decision record:
 
 - Matched output feature dimensionality or explicitly matched representational budget.
 - Matched optimization budget.
@@ -31,7 +31,7 @@ The baseline suite is locked to include:
 - Learned embedding baseline, such as an autoencoder-derived representation.
 - A simple but competent MLP baseline that is not intentionally underpowered or under-tuned.
 
-If a baseline is dropped for a given dataset, the reason must be logged in the corresponding issue and phase record.
+If a baseline is dropped for a given dataset, the reason must be logged in the corresponding experiment record and phase record.
 
 ### 3. Hard Dataset Requirement
 
@@ -127,7 +127,7 @@ This is the phase where equivalence findings become publication-strength rather 
 
 ## Explicit Stop Rules
 
-The team must halt and open a decision issue if any of the following occurs:
+The team must halt and open a decision record if any of the following occurs:
 
 - Reproducibility fails under fixed seeds.
 - Capacity matching becomes ambiguous for a claimed comparison.

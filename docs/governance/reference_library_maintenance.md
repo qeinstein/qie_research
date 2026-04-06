@@ -52,7 +52,7 @@ If a PDF is too large or legally restricted, do not commit it. Instead, record i
 2. Add the PDF if legally and practically appropriate.
 3. Add a reading note file or extend an existing note when the paper materially affects the project.
 4. Mention the citation key in the Pull Request description.
-5. If the paper changes project direction, open a decision issue.
+5. If the paper changes project direction, open a decision record.
 
 ## Required Steps for Editing an Existing Entry
 

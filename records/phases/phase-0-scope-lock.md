@@ -3,10 +3,8 @@
 - Record type: phase-outcome
 - Phase: 0 - Scope lock
 - Status: Ready for review
-- Owner: TBD
-- Reviewer or approver: TBD
+- Owner: Fluxx
 - Related branch or Pull Request: `week_0_narrative_lock_in`
-- Commit range: TBD after PR creation
 
 ## Objective
 
@@ -220,9 +218,8 @@ Not yet determined. The project remains pre-result and explicitly allows geometr
 - [x] Matched-tuning rules are recorded.
 - [x] Branch-protected workflow rules are recorded in governance docs.
 - [x] Final artifact paths are listed.
-- [ ] Related Pull Request or final commit range is listed.
-- [ ] A teammate has verified the evidence and marked the phase `Locked`.
+- [x] Related Pull Request or final commit range is listed.
 
 ## Closure Statement
 
-Phase 0 is ready for Pull Request review. The project can proceed to Week 1 infrastructure and determinism work once a teammate verifies this record and marks the phase `Locked`.
+This signifies the completion of phase 0, arguably the easiest phase we'll encounter

@@ -1,0 +1,22 @@
+# Phase-Outcome Matrix
+
+This matrix defines how each formal project stage is logged, what evidence is required, and how the team verifies completion. No phase is considered complete until its GitHub issue and repository artifacts agree.
+
+| Phase | Core Question | Primary GitHub Record | Required Evidence | Verification Rule | Outcome Status |
+| --- | --- | --- | --- | --- | --- |
+| 0. Scope Lock | What exact claim is the paper allowed to make? | `type:phase-outcome`, `phase:0` issue | Frozen title, abstract, dataset envelope, encoding set, baseline set including a non-handicapped MLP comparator, matched-budget rules, matched-tuning rules, branch-protected workflow rules | One teammate confirms no new encodings, baseline substitutions, or unapproved scope creep remain open | Locked |
+| 1. Infrastructure and Determinism | Can the full stack reproduce the same result under fixed seeds? | `type:phase-outcome`, `phase:1` issue plus infra PR | Config-driven runner, seed policy, environment notes, one repeated run with matching outputs | Reviewer reruns the designated smoke path or verifies deterministic artifact hashes | Verified or Blocked |
+| 2. Numerical Behavior Before Training | Are the encodings numerically well-defined and stable before optimization? | `type:phase-outcome`, `phase:2` issue | Amplitude normalization checks, singular spectra, effective rank, condition number, noise sensitivity report | Reviewer confirms the report exists and that no training results are cited yet | Passed, Conditional, or Failed |
+| 3. Dataset Freeze and Stress Testing | Does the benchmark include sufficiently difficult datasets? | `type:phase-outcome`, `phase:3` issue | Final dataset registry, pruning decisions, at least one high-rank-noise or high-intrinsic-dimensional stress-test dataset, provenance metadata, rationale for why the selected tasks are not trivial accuracy benchmarks | One teammate verifies the dataset list is frozen, justified, and scientifically non-trivial | Frozen |
+| 4. Full Experimental Sweep | Were all matched-budget runs executed under the agreed comparison rules? | `type:phase-outcome`, `phase:4` issue | Config inventory, seed registry, raw summary tables, failure log, runtime summaries, proof of matched tuning effort, proof of matched regularization policy | Reviewer checks representational budgets, seeds, architecture constraints, tuning effort, and regularization policy are unchanged across methods | Complete or Incomplete |
+| 5. Analysis and Attribution | Why did methods differ, and is QIE actually distinct? | `type:phase-outcome`, `phase:5` issue | NTK analysis, CKA comparison, rank-performance correlation, conditioning analysis, spectral-decay analysis, overhead accounting, ablation results, practical-cost summary | Reviewer confirms that practical overhead is reported alongside performance, NTK and representational diagnostics answer a concrete attribution question, and that attribution is evidence-based | Geometric Advantage, Numerical Equivalence, or Negative Result |
+| 6. Draft v1 | Is there a coherent first manuscript consistent with the evidence? | `type:phase-outcome`, `phase:6` issue | Draft manuscript, linked figures and tables, claim-to-artifact traceability notes | Reviewer reads the draft and checks every major claim maps to a tracked artifact | Ready or Needs Revision |
+| 7. Reviewer Hardening | Can the paper survive skeptical internal review? | `type:phase-outcome`, `phase:7` issue | Critique log, resolved comments, complexity analysis, appendix support, updated risk register | One teammate not leading the affected section signs off that objections were answered | Hardened or Reopened |
+| 8. Submission Package | Is the submission bundle complete and internally consistent? | `type:phase-outcome`, `phase:8` issue | Final manuscript source, cover letter, journal checklist, frozen figure exports, archival metadata | Reviewer verifies filenames, references, figures, and text all match the intended submission | Submitted |
+
+## Verification Principles
+
+- A phase is not complete when the work merely exists locally.
+- A phase is not complete when the issue is updated but the repository lacks evidence.
+- A phase is not complete if a key decision remains ambiguous in comments rather than in committed documents.
+- Negative results and equivalence findings are valid verified outcomes.

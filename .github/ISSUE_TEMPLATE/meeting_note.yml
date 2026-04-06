@@ -1,0 +1,42 @@
+name: Meeting note
+description: Capture agenda, decisions, and action items from a team meeting.
+title: "[MEETING][YYYY-MM-DD] "
+labels:
+  - "type:meeting-note"
+body:
+  - type: input
+    id: date
+    attributes:
+      label: Meeting date
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: textarea
+    id: attendees
+    attributes:
+      label: Attendees
+      placeholder: List attendees and note absences.
+    validations:
+      required: true
+  - type: textarea
+    id: agenda
+    attributes:
+      label: Agenda
+      placeholder: Bullet the topics reviewed in this meeting.
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions made
+      placeholder: Record any scope freezes, methodology changes, or narrative decisions.
+    validations:
+      required: true
+  - type: textarea
+    id: actions
+    attributes:
+      label: Action items
+      placeholder: Owner, action, due date.
+    validations:
+      required: true
+

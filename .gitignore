@@ -1,0 +1,133 @@
+# OS and editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+._*
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+*.secrets
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.dylib
+*.egg
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+site/
+pip-wheel-metadata/
+.ipynb_checkpoints/
+
+# R
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+renv/library/
+packrat/lib*/
+
+# Julia
+.julia/
+*.ji
+
+# Notebook and experiment tooling
+wandb/
+mlruns/
+lightning_logs/
+tensorboard/
+.hydra/
+multirun/
+
+# Coverage and profiling
+coverage/
+prof/
+profile_default/
+*.prof
+*.lprof
+
+# LaTeX build products
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+*.dvi
+*.ps
+
+# Large or regenerable data artifacts
+data/raw/**/*
+!data/raw/**/
+!data/raw/**/.gitkeep
+data/processed/**/*
+!data/processed/**/
+!data/processed/**/.gitkeep
+
+# Heavy runtime logs
+results/logs/**/*
+!results/logs/**/
+!results/logs/**/.gitkeep
+
+# Binary model and tensor formats
+*.ckpt
+*.h5
+*.hdf5
+*.joblib
+*.npy
+*.npz
+*.onnx
+*.pb
+*.pickle
+*.pkl
+*.pt
+*.pth
+
+# Temporary exports and caches
+*.bak
+*.cache
+*.tmp
+*.temp
+*.orig
+*.rej
+nohup.out

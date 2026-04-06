@@ -1,0 +1,71 @@
+name: Phase outcome
+description: Record and verify completion of a formal project phase.
+title: "[PHASE X] "
+labels:
+  - "type:phase-outcome"
+body:
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      description: Select the formal phase being closed or reviewed.
+      options:
+        - "0 - Scope lock"
+        - "1 - Infrastructure and determinism"
+        - "2 - Numerical behavior before training"
+        - "3 - Dataset freeze and stress testing"
+        - "4 - Full experimental sweep"
+        - "5 - Analysis and attribution"
+        - "6 - Draft v1"
+        - "7 - Reviewer hardening"
+        - "8 - Submission package"
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the exact outcome this phase must prove or freeze.
+      placeholder: Describe the decision, deliverable, or verification target.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and artifact paths
+      description: List the repository paths, issue links, reports, figures, tables, or configs that verify the phase.
+      placeholder: "- results/tables/...\n- docs/internal_reports/...\n- PR #..."
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification method
+      description: Explain how a teammate should verify completion.
+      placeholder: Deterministic rerun, manual review, checksum comparison, manuscript traceability check, etc.
+    validations:
+      required: true
+  - type: dropdown
+    id: narrative
+    attributes:
+      label: Outcome narrative
+      description: Choose the current interpretation of the evidence.
+      options:
+        - Geometric advantage
+        - Numerical equivalence
+        - Negative result
+        - Not yet determined
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Completion checklist
+      options:
+        - label: I linked the Pull Request or commit range for this phase.
+          required: true
+        - label: I listed the final artifact paths used to verify this phase.
+          required: true
+        - label: I documented whether the phase changes project scope or claims.
+          required: true
+

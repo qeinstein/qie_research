@@ -1,6 +1,6 @@
 # Research Execution Plan: Quantum-Inspired Feature Encodings
 
-Project title: Quantum-Inspired Feature Encodings as Classical Representations
+Project title: Benchmarking Quantum-Inspired Feature Encodings as Explicit High-Dimensional Representations in Classical Machine Learning
 
 ## North-Star Objective
 

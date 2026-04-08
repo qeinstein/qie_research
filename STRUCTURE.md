@@ -29,7 +29,6 @@ This is the current tracked repository structure. Add new folders only when real
 |-- records/                  Repository-native records for phases, experiments, and decisions.
 |   |-- phases/               Formal phase outcome records.
 |   |-- experiments/          Experiment registration and run-family records.
-|   |-- decisions/            Scope, method, dataset, narrative, or tooling decisions.
 ```
 
 ## Root Files

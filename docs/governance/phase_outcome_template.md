@@ -5,8 +5,6 @@
 - Status: Draft | In Review | Locked | Verified | Blocked | Reopened
 - Owner:
 - Reviewer or approver:
-- Related branch or Pull Request:
-- Commit range:
 
 ## Objective
 

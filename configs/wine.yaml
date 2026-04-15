@@ -22,3 +22,32 @@ model:
   name: logistic_regression
   max_iter: 1000
   C: 1.0
+
+# Classical baselines — all run on raw features (no QIE encoding).
+# n_components: auto = mean QIE d_out across all three encodings.
+baselines:
+  - name: raw_linear
+    feature_map: {name: scaler}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: rff
+    feature_map: {name: rff, n_components: auto, gamma: auto}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: poly2
+    feature_map: {name: polynomial, degree: 2}
+    model: {name: logistic_regression, max_iter: 2000, C: 1.0}
+
+  - name: poly3
+    feature_map: {name: polynomial, degree: 3}
+    model: {name: logistic_regression, max_iter: 2000, C: 1.0}
+
+  - name: pca
+    feature_map: {name: pca, n_components: auto}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: rbf_svm
+    model: {name: rbf_svm, C: 1.0, gamma: scale}
+
+  - name: mlp
+    model: {name: mlp, hidden_layer_sizes: [256, 128], max_iter: 500, alpha: 0.0001}

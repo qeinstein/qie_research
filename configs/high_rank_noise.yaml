@@ -27,3 +27,24 @@ model:
   name: logistic_regression
   max_iter: 1000
   C: 1.0
+
+# Polynomial features omitted: 200 features → ~20k degree-2 features.
+# With 5k samples that's a 5k × 20k matrix — borderline on RAM, excluded for safety.
+baselines:
+  - name: raw_linear
+    feature_map: {name: scaler}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: rff
+    feature_map: {name: rff, n_components: auto, gamma: auto}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: pca
+    feature_map: {name: pca, n_components: auto}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: rbf_svm
+    model: {name: rbf_svm, C: 1.0, gamma: scale}
+
+  - name: mlp
+    model: {name: mlp, hidden_layer_sizes: [256, 128], max_iter: 500, alpha: 0.0001}

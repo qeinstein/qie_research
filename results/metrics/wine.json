@@ -3,7 +3,7 @@
     "name": "wine",
     "seed": 42,
     "config_path": "configs/wine.yaml",
-    "timestamp": "2026-04-15T20:07:31.337081+00:00"
+    "timestamp": "2026-04-15T20:26:05.966395+00:00"
   },
   "dataset": {
     "name": "wine",
@@ -25,13 +25,13 @@
         "f1_macro": 0.536364
       },
       "timing_seconds": {
-        "encoding": 0.000799,
-        "training": 0.029604,
-        "total": 0.030402
+        "encoding": 0.000852,
+        "training": 0.040484,
+        "total": 0.041336
       },
       "memory_bytes": {
         "encoding_peak": 51144,
-        "training_peak": 66823
+        "training_peak": 66826
       }
     },
     {
@@ -47,13 +47,13 @@
         "f1_macro": 0.970962
       },
       "timing_seconds": {
-        "encoding": 0.000605,
-        "training": 0.018927,
-        "total": 0.019532
+        "encoding": 0.000727,
+        "training": 0.021455,
+        "total": 0.022182
       },
       "memory_bytes": {
-        "encoding_peak": 105157,
-        "training_peak": 63762
+        "encoding_peak": 105104,
+        "training_peak": 63722
       }
     },
     {
@@ -68,13 +68,210 @@
         "f1_macro": 0.915147
       },
       "timing_seconds": {
-        "encoding": 0.00103,
-        "training": 0.027231,
-        "total": 0.028261
+        "encoding": 0.000718,
+        "training": 0.035891,
+        "total": 0.036609
       },
       "memory_bytes": {
-        "encoding_peak": 215944,
-        "training_peak": 145734
+        "encoding_peak": 215998,
+        "training_peak": 141724
+      }
+    }
+  ],
+  "baselines": [
+    {
+      "name": "raw_linear",
+      "feature_map": "scaler",
+      "feature_map_params": {},
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 13,
+      "feature_dim": 13,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.972222,
+        "f1_macro": 0.970962
+      },
+      "timing_seconds": {
+        "feature_map": 0.002395,
+        "training": 0.013012,
+        "total": 0.015407
+      },
+      "memory_bytes": {
+        "feature_map_peak": 37136,
+        "training_peak": 50185
+      }
+    },
+    {
+      "name": "rff",
+      "feature_map": "rff",
+      "feature_map_params": {
+        "n_components": "auto",
+        "gamma": "auto"
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 13,
+      "feature_dim": 49,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.944444,
+        "f1_macro": 0.945313
+      },
+      "timing_seconds": {
+        "feature_map": 0.010371,
+        "training": 0.012616,
+        "total": 0.022986
+      },
+      "memory_bytes": {
+        "feature_map_peak": 142605,
+        "training_peak": 85555
+      }
+    },
+    {
+      "name": "poly2",
+      "feature_map": "polynomial",
+      "feature_map_params": {
+        "degree": 2
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 2000,
+        "C": 1.0
+      },
+      "input_dim": 13,
+      "feature_dim": 104,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.916667,
+        "f1_macro": 0.915147
+      },
+      "timing_seconds": {
+        "feature_map": 0.007898,
+        "training": 0.019457,
+        "total": 0.027354
+      },
+      "memory_bytes": {
+        "feature_map_peak": 330164,
+        "training_peak": 141498
+      }
+    },
+    {
+      "name": "poly3",
+      "feature_map": "polynomial",
+      "feature_map_params": {
+        "degree": 3
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 2000,
+        "C": 1.0
+      },
+      "input_dim": 13,
+      "feature_dim": 559,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.916667,
+        "f1_macro": 0.915147
+      },
+      "timing_seconds": {
+        "feature_map": 0.012852,
+        "training": 0.051141,
+        "total": 0.063993
+      },
+      "memory_bytes": {
+        "feature_map_peak": 1455492,
+        "training_peak": 599213
+      }
+    },
+    {
+      "name": "pca",
+      "feature_map": "pca",
+      "feature_map_params": {
+        "n_components": "auto"
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 13,
+      "feature_dim": 12,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.944444,
+        "f1_macro": 0.940741
+      },
+      "timing_seconds": {
+        "feature_map": 0.055844,
+        "training": 0.258261,
+        "total": 0.314105
+      },
+      "memory_bytes": {
+        "feature_map_peak": 32826,
+        "training_peak": 48475
+      }
+    },
+    {
+      "name": "rbf_svm",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "rbf_svm",
+      "model_params": {
+        "C": 1.0,
+        "gamma": "scale"
+      },
+      "input_dim": 13,
+      "feature_dim": 13,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.972222,
+        "f1_macro": 0.970962
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 0.027179,
+        "total": 0.027179
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 42657
+      }
+    },
+    {
+      "name": "mlp",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "mlp",
+      "model_params": {
+        "hidden_layer_sizes": [
+          256,
+          128
+        ],
+        "max_iter": 500,
+        "alpha": 0.0001
+      },
+      "input_dim": 13,
+      "feature_dim": 13,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.916667,
+        "f1_macro": 0.916212
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 0.32868,
+        "total": 0.32868
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 2898373
       }
     }
   ]

@@ -3,7 +3,7 @@
     "name": "high_rank_noise",
     "seed": 42,
     "config_path": "configs/high_rank_noise.yaml",
-    "timestamp": "2026-04-15T19:48:16.279852+00:00"
+    "timestamp": "2026-04-15T20:24:56.373699+00:00"
   },
   "dataset": {
     "name": "high_rank_noise",
@@ -25,13 +25,13 @@
         "f1_macro": 0.936982
       },
       "timing_seconds": {
-        "encoding": 0.026581,
-        "training": 0.184654,
-        "total": 0.211235
+        "encoding": 0.045238,
+        "training": 0.126493,
+        "total": 0.171731
       },
       "memory_bytes": {
         "encoding_peak": 21026328,
-        "training_peak": 248777
+        "training_peak": 248971
       }
     },
     {
@@ -47,13 +47,13 @@
         "f1_macro": 0.84399
       },
       "timing_seconds": {
-        "encoding": 0.152318,
-        "training": 0.331378,
-        "total": 0.483696
+        "encoding": 0.269517,
+        "training": 0.406391,
+        "total": 0.675909
       },
       "memory_bytes": {
-        "encoding_peak": 44804784,
-        "training_peak": 278505
+        "encoding_peak": 44804837,
+        "training_peak": 278937
       }
     },
     {
@@ -68,13 +68,154 @@
         "f1_macro": 0.861892
       },
       "timing_seconds": {
-        "encoding": 0.225935,
-        "training": 0.552443,
-        "total": 0.778378
+        "encoding": 0.440276,
+        "training": 0.865166,
+        "total": 1.305442
       },
       "memory_bytes": {
         "encoding_peak": 92806414,
-        "training_peak": 650548
+        "training_peak": 652362
+      }
+    }
+  ],
+  "baselines": [
+    {
+      "name": "raw_linear",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 200,
+      "feature_dim": 200,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.93,
+        "f1_macro": 0.929977
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 0.311445,
+        "total": 0.311445
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 217867
+      }
+    },
+    {
+      "name": "rff",
+      "feature_map": "rff",
+      "feature_map_params": {
+        "n_components": "auto",
+        "gamma": "auto"
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 200,
+      "feature_dim": 752,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.883,
+        "f1_macro": 0.882948
+      },
+      "timing_seconds": {
+        "feature_map": 0.486806,
+        "training": 0.164123,
+        "total": 0.650929
+      },
+      "memory_bytes": {
+        "feature_map_peak": 32969157,
+        "training_peak": 381274
+      }
+    },
+    {
+      "name": "pca",
+      "feature_map": "pca",
+      "feature_map_params": {
+        "n_components": "auto"
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 200,
+      "feature_dim": 199,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.932,
+        "f1_macro": 0.931978
+      },
+      "timing_seconds": {
+        "feature_map": 0.25297,
+        "training": 0.196128,
+        "total": 0.449098
+      },
+      "memory_bytes": {
+        "feature_map_peak": 8355590,
+        "training_peak": 217098
+      }
+    },
+    {
+      "name": "rbf_svm",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "rbf_svm",
+      "model_params": {
+        "C": 1.0,
+        "gamma": "scale"
+      },
+      "input_dim": 200,
+      "feature_dim": 200,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.931,
+        "f1_macro": 0.930994
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 3.217324,
+        "total": 3.217324
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 12848333
+      }
+    },
+    {
+      "name": "mlp",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "mlp",
+      "model_params": {
+        "hidden_layer_sizes": [
+          256,
+          128
+        ],
+        "max_iter": 500,
+        "alpha": 0.0001
+      },
+      "input_dim": 200,
+      "feature_dim": 200,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.924,
+        "f1_macro": 0.924
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 5.584681,
+        "total": 5.584681
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 19050658
       }
     }
   ]

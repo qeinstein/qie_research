@@ -24,3 +24,29 @@ model:
   name: logistic_regression
   max_iter: 1000
   C: 1.0
+
+# SVM is O(n^2) — capped at 20k training rows.
+# MLP and poly are tractable on 285k rows.
+baselines:
+  - name: raw_linear
+    feature_map: {name: scaler}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: rff
+    feature_map: {name: rff, n_components: auto, gamma: auto}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: poly2
+    feature_map: {name: polynomial, degree: 2}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: pca
+    feature_map: {name: pca, n_components: auto}
+    model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: rbf_svm
+    max_samples: 20000
+    model: {name: rbf_svm, C: 1.0, gamma: scale}
+
+  - name: mlp
+    model: {name: mlp, hidden_layer_sizes: [256, 128], max_iter: 500, alpha: 0.0001}

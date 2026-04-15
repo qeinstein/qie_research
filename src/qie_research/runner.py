@@ -49,10 +49,15 @@ from pathlib import Path
 import numpy as np
 import yaml
 from sklearn.datasets import fetch_openml, load_wine
+from sklearn.decomposition import PCA
+from sklearn.kernel_approximation import RBFSampler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder, PolynomialFeatures, StandardScaler
+from sklearn.svm import SVC
 
 from qie_research.encodings import ENCODING_REGISTRY
 
@@ -393,6 +398,96 @@ DATASET_REGISTRY: dict[str, callable] = {
 }
 
 
+# Feature-map registry (for classical baselines that use an explicit transform)
+
+def _build_rff_map(params: dict, n_components_auto: int, seed: int,
+                   n_features: int = 1):
+    """
+    Random Fourier Features approximation of an RBF kernel.
+
+    Pipeline: StandardScaler → RBFSampler.  Scaling first means the gamma
+    heuristic makes sense: ``gamma='auto'`` (the default) sets
+    ``gamma = 1 / n_features`` which is equivalent to sklearn's ``'scale'``
+    heuristic on standardised data and gives a kernel that is neither
+    vanishingly narrow nor trivially flat.
+
+    n_components defaults to n_components_auto (mean QIE d_out for the run)
+    when the config specifies ``n_components: auto`` or omits the key.
+    """
+    n = params.get("n_components", "auto")
+    if n == "auto" or n is None:
+        n = n_components_auto
+    gamma_cfg = params.get("gamma", "auto")
+    if gamma_cfg == "auto" or gamma_cfg is None:
+        gamma = 1.0 / max(n_features, 1)
+    else:
+        gamma = float(gamma_cfg)
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("rff", RBFSampler(n_components=int(n), gamma=gamma, random_state=seed)),
+    ])
+
+
+def _build_poly_map(params: dict, n_components_auto: int, seed: int,
+                    n_features: int = 1):
+    """
+    Polynomial feature expansion followed by standardisation.
+
+    Pipeline: PolynomialFeatures → StandardScaler.  The scaler is essential:
+    cross-terms and powers have wildly different magnitudes without it, which
+    causes the downstream logistic regression to fail to converge.
+
+    degree defaults to 2.  include_bias=False avoids collinearity with the
+    logistic regression intercept term.
+    """
+    degree = int(params.get("degree", 2))
+    interaction_only = bool(params.get("interaction_only", False))
+    return Pipeline([
+        ("poly", PolynomialFeatures(
+            degree=degree,
+            interaction_only=interaction_only,
+            include_bias=False,
+        )),
+        ("scaler", StandardScaler()),
+    ])
+
+
+def _build_pca_map(params: dict, n_components_auto: int, seed: int,
+                   n_features: int = 1):
+    """
+    PCA projection as a learned linear embedding baseline.
+
+    n_components defaults to n_components_auto when the config specifies
+    ``n_components: auto`` or omits the key.  The runner caps the value at
+    min(n_features - 1, n_samples - 1) before constructing this object so
+    sklearn never receives an infeasible request.
+    """
+    n = params.get("n_components", "auto")
+    if n == "auto" or n is None:
+        n = n_components_auto
+    return PCA(n_components=int(n), random_state=seed)
+
+
+def _build_scaler_map(params: dict, n_components_auto: int, seed: int,
+                      n_features: int = 1):
+    """
+    StandardScaler as a standalone feature map.
+
+    Used for the 'raw_linear' baseline (scaled linear): applies mean-variance
+    normalisation to raw features before logistic regression.  This is the
+    'scaled linear' comparator required by the Phase 0 scope lock.
+    """
+    return StandardScaler()
+
+
+FEATURE_MAP_REGISTRY: dict[str, callable] = {
+    "scaler": _build_scaler_map,
+    "rff": _build_rff_map,
+    "polynomial": _build_poly_map,
+    "pca": _build_pca_map,
+}
+
+
 # Model registry
 
 def _build_logistic_regression(params: dict):
@@ -403,8 +498,52 @@ def _build_logistic_regression(params: dict):
     )
 
 
+def _build_rbf_svm(params: dict):
+    """
+    SVM with RBF kernel.
+
+    Pipeline: StandardScaler → SVC.  Scaling is mandatory for gamma='scale'
+    to have the intended effect.  For large datasets, pass ``max_samples``
+    in the baseline config block to subsample before training.
+    """
+    C = float(params.get("C", 1.0))
+    gamma = params.get("gamma", "scale")
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("svc", SVC(kernel="rbf", C=C, gamma=gamma,
+                    random_state=params.get("_seed"))),
+    ])
+
+
+def _build_mlp(params: dict):
+    """
+    Multi-layer perceptron baseline.
+
+    Pipeline: StandardScaler → MLPClassifier.  early_stopping=True prevents
+    runaway training on large datasets.  hidden_layer_sizes defaults to
+    [256, 128] — a non-trivially shallow architecture that is not
+    intentionally underpowered.
+    """
+    hidden = params.get("hidden_layer_sizes", [256, 128])
+    max_iter = int(params.get("max_iter", 500))
+    alpha = float(params.get("alpha", 1e-4))
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("mlp", MLPClassifier(
+            hidden_layer_sizes=tuple(hidden),
+            max_iter=max_iter,
+            alpha=alpha,
+            early_stopping=True,
+            validation_fraction=0.1,
+            random_state=params.get("_seed"),
+        )),
+    ])
+
+
 MODEL_REGISTRY: dict[str, callable] = {
     "logistic_regression": _build_logistic_regression,
+    "rbf_svm": _build_rbf_svm,
+    "mlp": _build_mlp,
 }
 
 
@@ -475,6 +614,129 @@ def _train_and_evaluate(
         "f1_macro": round(float(f1_score(y_test, y_pred, average="macro")), 6),
     }
     return metrics, elapsed, peak
+
+
+# Classical baseline runner
+
+def _run_baseline(
+    baseline_cfg: dict,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    seed: int,
+    n_components_auto: int,
+) -> dict:
+    """
+    Run one classical baseline entry from the config ``baselines`` list.
+
+    A baseline may optionally include a ``feature_map`` block (for RFF,
+    polynomial features, or PCA) followed by a ``model`` block, or just a
+    ``model`` block applied directly to raw features.
+
+    The ``n_components_auto`` value is the mean output dimensionality of all
+    QIE encodings for this run; it is used when a feature map specifies
+    ``n_components: auto``, providing the matched-budget dimension.
+
+    An optional ``max_samples`` key in the baseline block subsamples the
+    training data before the model fit step, which is required for SVM on
+    datasets with hundreds of thousands of rows.
+
+    Returns
+    -------
+    dict with keys: name, feature_map, feature_map_params, model,
+    model_params, input_dim, feature_dim, subsampled_train_n, metrics,
+    timing_seconds, memory_bytes.
+    """
+    baseline_name = baseline_cfg["name"]
+    feature_map_cfg = baseline_cfg.get("feature_map", None)
+    model_cfg = baseline_cfg["model"]
+
+    # ── Optional feature-map step ────────────────────────────────────────────
+    if feature_map_cfg is not None:
+        fm_name = feature_map_cfg["name"]
+        fm_params = {k: v for k, v in feature_map_cfg.items() if k != "name"}
+
+        if fm_name not in FEATURE_MAP_REGISTRY:
+            raise ValueError(
+                f"Unknown feature map '{fm_name}'. "
+                f"Available: {list(FEATURE_MAP_REGISTRY.keys())}"
+            )
+
+        # PCA: cap n_components so sklearn never receives an infeasible value.
+        auto = n_components_auto
+        if fm_name == "pca":
+            auto = min(n_components_auto,
+                       X_train.shape[1] - 1,
+                       X_train.shape[0] - 1)
+
+        feature_map = FEATURE_MAP_REGISTRY[fm_name](
+            fm_params, auto, seed, n_features=int(X_train.shape[1])
+        )
+
+        tracemalloc.start()
+        t0 = time.perf_counter()
+        feature_map.fit(X_train)
+        X_train_mapped = feature_map.transform(X_train)
+        X_test_mapped = feature_map.transform(X_test)
+        fm_elapsed = time.perf_counter() - t0
+        _, fm_peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        feature_dim = int(X_train_mapped.shape[1])
+    else:
+        X_train_mapped, X_test_mapped = X_train, X_test
+        fm_elapsed, fm_peak = 0.0, 0
+        feature_dim = int(X_train.shape[1])
+        fm_name = None
+        fm_params = {}
+
+    # ── Optional subsampling (required for SVM on large datasets) ────────────
+    max_samples = baseline_cfg.get("max_samples", None)
+    X_tr, y_tr = X_train_mapped, y_train
+    subsampled_n = None
+    if max_samples is not None and len(X_tr) > int(max_samples):
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(len(X_tr), size=int(max_samples), replace=False)
+        idx.sort()
+        X_tr, y_tr = X_tr[idx], y_tr[idx]
+        subsampled_n = int(max_samples)
+
+    # ── Model step ───────────────────────────────────────────────────────────
+    if model_cfg["name"] not in MODEL_REGISTRY:
+        raise ValueError(
+            f"Unknown model '{model_cfg['name']}'. "
+            f"Available: {list(MODEL_REGISTRY.keys())}"
+        )
+
+    model_params = {k: v for k, v in model_cfg.items() if k != "name"}
+    model_params["_seed"] = seed
+    model = MODEL_REGISTRY[model_cfg["name"]](model_params)
+
+    metrics, train_elapsed, train_peak = _train_and_evaluate(
+        model, X_tr, y_tr, X_test_mapped, y_test
+    )
+
+    return {
+        "name": baseline_name,
+        "feature_map": fm_name,
+        "feature_map_params": fm_params if fm_name else None,
+        "model": model_cfg["name"],
+        "model_params": {k: v for k, v in model_params.items() if k != "_seed"},
+        "input_dim": int(X_train.shape[1]),
+        "feature_dim": feature_dim,
+        "subsampled_train_n": subsampled_n,
+        "metrics": metrics,
+        "timing_seconds": {
+            "feature_map": round(fm_elapsed, 6),
+            "training": round(train_elapsed, 6),
+            "total": round(fm_elapsed + train_elapsed, 6),
+        },
+        "memory_bytes": {
+            "feature_map_peak": fm_peak,
+            "training_peak": train_peak,
+        },
+    }
 
 
 # Main runner
@@ -580,6 +842,22 @@ def run(config_path: str | Path) -> dict:
             },
         })
 
+    # ── Classical baselines ──────────────────────────────────────────────────
+    # n_components_auto is the mean QIE output dimension for this run.
+    # Feature-map baselines that specify n_components: auto use this value so
+    # that their output space is matched to the average QIE encoding budget.
+    qie_d_outs = [r["output_dim"] for r in encoding_results]
+    n_components_auto = int(round(sum(qie_d_outs) / len(qie_d_outs)))
+
+    baseline_results = []
+    for bl_cfg in cfg.get("baselines", []):
+        bl_result = _run_baseline(
+            bl_cfg, X_train, y_train, X_test, y_test,
+            seed=seed,
+            n_components_auto=n_components_auto,
+        )
+        baseline_results.append(bl_result)
+
     # Assemble and write results
     output = {
         "run": {
@@ -590,6 +868,7 @@ def run(config_path: str | Path) -> dict:
         },
         "dataset": dataset_info,
         "results": encoding_results,
+        "baselines": baseline_results,
     }
 
     output_dir = Path(cfg["run"]["output_dir"])
@@ -618,8 +897,8 @@ def main() -> None:
 
     results = run(args.config)
 
-    print("\nSummary")
-    print("-" * 50)
+    print("\nQIE Encodings")
+    print("-" * 62)
     for r in results["results"]:
         print(
             f"  {r['encoding']:<12}"
@@ -629,6 +908,21 @@ def main() -> None:
             f"  train={r['timing_seconds']['training']:.4f}s"
             f"  d_out={r['output_dim']}"
         )
+
+    if results["baselines"]:
+        print("\nClassical Baselines")
+        print("-" * 62)
+        for b in results["baselines"]:
+            fm = f"+{b['feature_map']}" if b["feature_map"] else ""
+            sub = f"  (subsample={b['subsampled_train_n']})" if b["subsampled_train_n"] else ""
+            print(
+                f"  {b['name']:<18}"
+                f"  accuracy={b['metrics']['accuracy']:.4f}"
+                f"  f1={b['metrics']['f1_macro']:.4f}"
+                f"  total={b['timing_seconds']['total']:.4f}s"
+                f"  d_feat={b['feature_dim']}"
+                f"{sub}"
+            )
 
 
 if __name__ == "__main__":

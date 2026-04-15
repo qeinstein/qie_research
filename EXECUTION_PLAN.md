@@ -196,12 +196,24 @@ Design constraints:
 - Five independent seeds unless compute constraints are documented.
 - Fixed training-budget ceiling, with deviations logged.
 
+Deferred from Phase 1:
+
+- Add a differentiable model with an explicit training loop (PyTorch or JAX).
+- Log training loss per epoch for all runs.
+- Log gradient norm per epoch for all runs.
+- Integrate loss curve and gradient norm curve into the runner output JSON.
+
+These were deferred from Phase 1 because the sklearn solver used in the
+infrastructure smoke test does not expose per-iteration loss or gradients.
+They must be in place before the full sweep begins.
+
 Deliverables:
 
 - Raw result summary tables.
 - Runtime and memory overhead summaries.
 - Draft descriptive figures.
 - Failure and rerun log.
+- Loss curves and gradient norm curves for all runs.
 
 ### Week 5: Analysis and the "Why"
 

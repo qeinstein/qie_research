@@ -1,0 +1,391 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{listings}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black
+}
+
+\title{
+    \textbf{Phase 2: Numerical Behaviour Audit} \\
+    \large Benchmarking Quantum-Inspired Feature Encodings as Explicit
+    High-Dimensional Representations in Classical Machine Learning
+}
+\author{QIE Research Team}
+\date{April 2026}
+
+% -------------------------------------------------------------------------
+\begin{document}
+% -------------------------------------------------------------------------
+
+\maketitle
+\tableofcontents
+\newpage
+
+% -------------------------------------------------------------------------
+\section{Purpose and Scope}
+% -------------------------------------------------------------------------
+
+This report documents the Phase~2 numerical behaviour audit for the three
+quantum-inspired feature encodings under study: amplitude encoding, angle
+encoding, and basis encoding.  The audit is a mandatory pre-training gate.
+No performance claims, accuracy results, or downstream model comparisons
+appear in this document.
+
+The central questions are:
+
+\begin{enumerate}
+    \item Do the encodings satisfy their structural invariants on real data?
+    \item What is the geometry of each encoded feature matrix, measured through
+          singular value distribution, effective rank, and condition number?
+    \item How stable is each encoding under small input perturbations?
+\end{enumerate}
+
+All results were produced from the UCI Wine dataset (142 training samples,
+13 features, 3 classes) using seed 42.  The audit script is located at
+\texttt{src/qie\_research/analysis/numerical\_audit.py} and the raw numbers
+are in \texttt{results/metrics/phase\_2\_numerical\_audit.json}.
+
+% -------------------------------------------------------------------------
+\section{Encoding Definitions}
+% -------------------------------------------------------------------------
+
+Each encoding maps a classical input vector $\mathbf{x} \in \mathbb{R}^d$
+to an explicit feature vector $\varphi(\mathbf{x})$.  The three encodings
+and their output dimensions are:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Encoding} & \textbf{Map} & \textbf{Output dim} & \textbf{Differentiable} \\
+\midrule
+Amplitude & $\varphi(\mathbf{x}) = \hat{\mathbf{x}}$, padded to $2^n$ & $2^{\lceil \log_2 d \rceil}$ & Yes \\
+Angle     & $[\cos(\pi x_i/2),\, \sin(\pi x_i/2)]_{i=1}^{d}$, interleaved & $2d$ & Yes \\
+Basis     & $b$-bit binary of each quantised $x_i$, concatenated & $d \cdot b$ & No \\
+\bottomrule
+\end{tabular}
+\caption{Summary of the three encodings and their classical feature maps.}
+\end{table}
+
+For $d = 13$ input features (UCI Wine) and $b = 8$ bits, the output
+dimensions are 16, 26, and 104 respectively.
+
+% -------------------------------------------------------------------------
+\section{Formulae}
+% -------------------------------------------------------------------------
+
+\subsection{Effective Rank}
+
+Effective rank quantifies how evenly a representation uses its feature
+dimensions, via the entropy of the normalised singular value spectrum:
+
+\begin{equation}
+    \mathrm{erank}(\mathbf{X}) = \exp\!\left( -\sum_{i} p_i \log p_i \right),
+    \qquad p_i = \frac{\sigma_i}{\sum_j \sigma_j}
+    \label{eq:erank}
+\end{equation}
+
+A rank-1 matrix has $\mathrm{erank} = 1$.  A matrix with a perfectly flat
+spectrum has $\mathrm{erank} = d_{\mathrm{out}}$.  Higher effective rank
+indicates broader use of representational capacity, though it is not
+sufficient on its own to claim practical advantage.
+
+\subsection{Condition Number}
+
+The condition number measures numerical stability as the ratio of the
+largest to the smallest non-zero singular value:
+
+\begin{equation}
+    \kappa = \frac{\sigma_{\max}}{\sigma_{\min}}
+    \label{eq:kappa}
+\end{equation}
+
+A high condition number indicates that the feature matrix is nearly
+rank-deficient and that small input perturbations can produce large
+changes in the encoded space, potentially destabilising optimisation.
+
+\subsection{Noise Stability}
+
+Noise stability measures the mean per-sample Frobenius distance between
+the clean and perturbed encodings under additive Gaussian noise
+$\varepsilon \sim \mathcal{N}(0,\, \sigma^2)$:
+
+\begin{equation}
+    \delta = \frac{\|\varphi(\mathbf{X} + \boldsymbol{\varepsilon}) -
+    \varphi(\mathbf{X})\|_F}{n}
+    \label{eq:noise}
+\end{equation}
+
+All noise stability results in this report use $\sigma = 0.01$.
+
+% -------------------------------------------------------------------------
+\section{Invariant Verification}
+% -------------------------------------------------------------------------
+
+Each encoding has a structural invariant that must hold for every encoded
+sample.  These were verified on all 142 training samples.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Encoding} & \textbf{Invariant} & \textbf{Result} \\
+\midrule
+Amplitude & $\sum_i \varphi(\mathbf{x})_i^2 = 1$ & \textcolor{green!60!black}{PASS} \\
+Angle     & $\cos^2(\theta_i/2) + \sin^2(\theta_i/2) = 1\ \forall\, i$ & \textcolor{green!60!black}{PASS} \\
+Basis     & All values $\in \{0, 1\}$ & \textcolor{green!60!black}{PASS} \\
+\bottomrule
+\end{tabular}
+\caption{Structural invariant verification across all 142 training samples.}
+\end{table}
+
+All three encodings satisfy their structural invariants on real data.
+
+% -------------------------------------------------------------------------
+\section{Singular Value Distributions}
+% -------------------------------------------------------------------------
+
+The top-10 singular values of each encoded feature matrix are reported
+below.  These reveal whether the representation distributes energy across
+many directions or concentrates it in a few.
+
+\subsection{Amplitude Encoding}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cc}
+\toprule
+\textbf{Rank} & \textbf{Singular value} \\
+\midrule
+1  & 11.898767 \\
+2  & 0.639309  \\
+3  & 0.082043  \\
+4  & 0.046871  \\
+5  & 0.026894  \\
+6  & 0.023239  \\
+7  & 0.017234  \\
+8  & 0.007243  \\
+9  & 0.006279  \\
+10 & 0.005238  \\
+\bottomrule
+\end{tabular}
+\caption{Top-10 singular values for amplitude encoding ($d_\mathrm{out} = 16$).}
+\end{table}
+
+The spectrum is strongly dominated by the first singular value
+($\sigma_1 = 11.90$), with a steep drop to $\sigma_2 = 0.64$.  This
+indicates that the amplitude-encoded feature matrix is nearly rank-1 ---
+almost all variance is concentrated in a single direction.  This is a
+direct consequence of L2 normalisation: after normalisation, all samples
+lie on the unit hypersphere, and the principal direction captures the
+dominant orientation of that cloud.
+
+\subsection{Angle Encoding}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cc}
+\toprule
+\textbf{Rank} & \textbf{Singular value} \\
+\midrule
+1  & 20.001993 \\
+2  & 16.531633 \\
+3  & 12.522490 \\
+4  & 9.731345  \\
+5  & 9.355629  \\
+6  & 9.072004  \\
+7  & 8.786925  \\
+8  & 8.138566  \\
+9  & 8.023533  \\
+10 & 7.630548  \\
+\bottomrule
+\end{tabular}
+\caption{Top-10 singular values for angle encoding ($d_\mathrm{out} = 26$).}
+\end{table}
+
+The spectrum decays gradually with no dominant spike, indicating that the
+angle encoding distributes energy broadly across many directions.  The
+smallest singular value is 2.65, giving a well-conditioned matrix.
+
+\subsection{Basis Encoding}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cc}
+\toprule
+\textbf{Rank} & \textbf{Singular value} \\
+\midrule
+1  & 59.763547 \\
+2  & 13.209988 \\
+3  & 11.430762 \\
+4  & 10.954934 \\
+5  & 10.793405 \\
+6  & 10.290472 \\
+7  & 9.907706  \\
+8  & 9.418556  \\
+9  & 9.333274  \\
+10 & 9.260879  \\
+\bottomrule
+\end{tabular}
+\caption{Top-10 singular values for basis encoding ($d_\mathrm{out} = 104$).}
+\end{table}
+
+Basis encoding has a large first singular value relative to the rest,
+reflecting the large constant offset introduced by the binary encoding of
+each feature.  Beyond the first component, the spectrum is relatively
+flat, contributing to a high effective rank.
+
+% -------------------------------------------------------------------------
+\section{Effective Rank and Condition Number}
+% -------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Encoding} & \textbf{$d_\mathrm{out}$} & \textbf{erank} &
+\textbf{erank / $d_\mathrm{out}$} & \textbf{$\kappa$} \\
+\midrule
+Amplitude & 16  & 1.3751  & 0.086 & 6650.85 \\
+Angle     & 26  & 23.2806 & 0.896 & 7.55    \\
+Basis     & 104 & 77.0907 & 0.741 & 108.73  \\
+\bottomrule
+\end{tabular}
+\caption{Effective rank, relative effective rank, and condition number for
+each encoding on the UCI Wine training split.}
+\end{table}
+
+The results reveal a large spread in representational geometry:
+
+\begin{itemize}
+    \item \textbf{Amplitude encoding} has an effective rank of 1.38 out of
+    a possible 16, meaning it effectively uses only about 1.4 of its 16
+    output dimensions.  The condition number of 6650.85 is very high,
+    indicating severe numerical ill-conditioning.  This is consistent with
+    the near-rank-1 singular value spectrum observed above and is a
+    direct consequence of L2 normalisation collapsing the feature space.
+
+    \item \textbf{Angle encoding} has an effective rank of 23.28 out of 26,
+    a relative utilisation of 89.6\%.  The condition number of 7.55 is low,
+    indicating a well-conditioned feature matrix.  Angle encoding makes
+    near-full use of its output dimensions.
+
+    \item \textbf{Basis encoding} has an effective rank of 77.09 out of 104,
+    a relative utilisation of 74.1\%.  The condition number of 108.73 is
+    moderate.  The large output dimensionality contributes to a high absolute
+    effective rank, though relative utilisation is lower than angle encoding.
+\end{itemize}
+
+% -------------------------------------------------------------------------
+\section{Noise Stability}
+% -------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Encoding} & \textbf{Noise $\sigma$} &
+\textbf{$\delta$ (mean Frobenius / sample)} & \textbf{Relative to $d_\mathrm{out}$} \\
+\midrule
+Amplitude & 0.01 & $5.0 \times 10^{-6}$ & $3.1 \times 10^{-7}$ \\
+Angle     & 0.01 & $1.4 \times 10^{-2}$ & $5.5 \times 10^{-4}$ \\
+Basis     & 0.01 & $2.9 \times 10^{-1}$ & $2.8 \times 10^{-3}$ \\
+\bottomrule
+\end{tabular}
+\caption{Noise stability under $\varepsilon \sim \mathcal{N}(0,\, 0.01^2)$.
+$\delta$ is the mean per-sample Frobenius distance between clean and noisy
+encodings (Equation~\ref{eq:noise}).}
+\end{table}
+
+\begin{itemize}
+    \item \textbf{Amplitude encoding} is highly stable under noise
+    ($\delta = 5.0 \times 10^{-6}$).  This is because L2 normalisation
+    absorbs small additive perturbations --- a small $\varepsilon$ changes
+    the direction of $\mathbf{x}$ only slightly, so the normalised output
+    is nearly unchanged.
+
+    \item \textbf{Angle encoding} shows moderate sensitivity
+    ($\delta = 1.4 \times 10^{-2}$).  Small input changes translate to
+    small angle changes, which propagate linearly through the cosine and
+    sine maps.
+
+    \item \textbf{Basis encoding} is the most sensitive to noise
+    ($\delta = 2.9 \times 10^{-1}$).  The quantisation step amplifies
+    small perturbations near bin boundaries --- a noise value that pushes
+    an input across a quantisation threshold flips a bit, changing the
+    encoded output discontinuously.  This is an expected and structural
+    property of basis encoding, not an implementation artefact.
+\end{itemize}
+
+% -------------------------------------------------------------------------
+\section{Summary and Readiness Assessment}
+% -------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Encoding} & \textbf{Invariant} & \textbf{erank} &
+\textbf{$\kappa$} & \textbf{Noise $\delta$} \\
+\midrule
+Amplitude & \textcolor{green!60!black}{PASS} & 1.38  & 6650.85 & $5.0 \times 10^{-6}$ \\
+Angle     & \textcolor{green!60!black}{PASS} & 23.28 & 7.55    & $1.4 \times 10^{-2}$ \\
+Basis     & \textcolor{green!60!black}{PASS} & 77.09 & 108.73  & $2.9 \times 10^{-1}$ \\
+\bottomrule
+\end{tabular}
+\caption{Summary of Phase 2 numerical audit results.}
+\end{table}
+
+All three encodings pass their structural invariant checks and are
+numerically well-defined on the UCI Wine dataset.  The audit surfaces
+three properties that are directly relevant to the Phase~4 and Phase~5
+analyses:
+
+\begin{enumerate}
+    \item Amplitude encoding is nearly rank-1 and severely ill-conditioned.
+    Any downstream model operating on amplitude-encoded features is working
+    in a near-one-dimensional space.  This will need to be reconciled with
+    its Phase~4 performance results and explained through the conditioning
+    and NTK analyses in Phase~5.
+
+    \item Angle encoding has near-full effective rank utilisation and a low
+    condition number.  It is the most geometrically well-behaved encoding
+    of the three under these conditions.
+
+    \item Basis encoding is sensitive to noise due to the discontinuous
+    quantisation step.  This is a structural limitation that must be
+    reported alongside any Phase~4 performance results and must be
+    highlighted in the practical overhead discussion.
+\end{enumerate}
+
+\textbf{Phase 3 (Dataset Freeze) may begin.}  No performance claims have
+been made in this report.
+
+% -------------------------------------------------------------------------
+\section{Artifact References}
+% -------------------------------------------------------------------------
+
+\begin{itemize}
+    \item Audit script:
+    \texttt{src/qie\_research/analysis/numerical\_audit.py}
+    \item Raw audit output:
+    \texttt{results/metrics/phase\_2\_numerical\_audit.json}
+    \item Phase record:
+    \texttt{records/phases/phase-2-numerical-behavior.md}
+    \item Encoding implementations:
+    \texttt{src/qie\_research/encodings/}
+\end{itemize}
+
+\end{document}

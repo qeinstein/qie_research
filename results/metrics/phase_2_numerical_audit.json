@@ -1,0 +1,123 @@
+{
+  "phase": 2,
+  "title": "Numerical Behavior Audit",
+  "dataset": {
+    "name": "wine",
+    "n_train": 142,
+    "n_test": 36,
+    "n_features": 13,
+    "noise_std": 0.01,
+    "seed": 42
+  },
+  "encodings": [
+    {
+      "encoding": "amplitude",
+      "encoding_params": {
+        "pad_to_power_of_two": true
+      },
+      "input_dim": 13,
+      "output_dim": 16,
+      "n_samples": 142,
+      "invariant_check": {
+        "passed": true,
+        "details": "sum_i x_i^2 == 1 for all rows"
+      },
+      "singular_values": {
+        "top_10": [
+          11.898767,
+          0.639309,
+          0.082043,
+          0.046871,
+          0.026894,
+          0.023239,
+          0.017234,
+          0.007243,
+          0.006279,
+          0.005238
+        ],
+        "full_count": 16,
+        "min": 0.0,
+        "max": 11.898767
+      },
+      "effective_rank": 1.3751,
+      "condition_number": 6650.853,
+      "noise_stability": {
+        "noise_std": 0.01,
+        "mean_frobenius_distance_per_sample": 5e-06
+      }
+    },
+    {
+      "encoding": "angle",
+      "encoding_params": {
+        "scale": 3.141592653589793,
+        "standardize": true
+      },
+      "input_dim": 13,
+      "output_dim": 26,
+      "n_samples": 142,
+      "invariant_check": {
+        "passed": true,
+        "details": "cos^2 + sin^2 == 1 for all pairs"
+      },
+      "singular_values": {
+        "top_10": [
+          20.001993,
+          16.531633,
+          12.52249,
+          9.731345,
+          9.355629,
+          9.072004,
+          8.786925,
+          8.138566,
+          8.023533,
+          7.630548
+        ],
+        "full_count": 26,
+        "min": 2.649122,
+        "max": 20.001993
+      },
+      "effective_rank": 23.2806,
+      "condition_number": 7.5504,
+      "noise_stability": {
+        "noise_std": 0.01,
+        "mean_frobenius_distance_per_sample": 0.014372
+      }
+    },
+    {
+      "encoding": "basis",
+      "encoding_params": {
+        "n_bits": 8
+      },
+      "input_dim": 13,
+      "output_dim": 104,
+      "n_samples": 142,
+      "invariant_check": {
+        "passed": true,
+        "details": "all values in {0, 1}"
+      },
+      "singular_values": {
+        "top_10": [
+          59.763547,
+          13.209988,
+          11.430762,
+          10.954934,
+          10.793405,
+          10.290472,
+          9.907706,
+          9.418556,
+          9.333274,
+          9.260879
+        ],
+        "full_count": 104,
+        "min": 0.549671,
+        "max": 59.763547
+      },
+      "effective_rank": 77.0907,
+      "condition_number": 108.7261,
+      "noise_stability": {
+        "noise_std": 0.01,
+        "mean_frobenius_distance_per_sample": 0.292487
+      }
+    }
+  ]
+}

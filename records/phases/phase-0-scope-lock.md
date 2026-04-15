@@ -2,7 +2,7 @@
 
 - Record type: phase-outcome
 - Phase: 0 - Scope lock
-- Status: Ready for review
+- Status: Locked
 - Owner: Fluxx
 - Related branch or Pull Request: `week_0_narrative_lock_in`
 

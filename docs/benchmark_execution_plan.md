@@ -47,9 +47,9 @@ to meet publication-quality standards.
 | Credit Card Fraud | Financial | 284,807 | 30 | 2 | Real financial data; PCA-preprocessed inputs |
 | Fashion-MNIST | Image | 70,000 | 784 | 10 | Primary image benchmark |
 | CIFAR-10 (flat) | Image | 60,000 | 3,072 | 10 | Harder image benchmark; expected by reviewers |
-| HIGGS (500k) | Physics | 500,000 | 21 | 2 | Canonical QML benchmark |
-| High-dim parity | Synthetic | 2,000 | 50 | 2 | Controlled synthetic; known decision boundary |
-| High-rank noise | Stress-test | 2,000 | 100 | 2 | Representational stress-test |
+| HIGGS (500k) | Physics | 500,000 | 28 | 2 | Canonical QML benchmark |
+| High-dim parity | Synthetic | 10,000 | 20 | 2 | Controlled synthetic; known decision boundary |
+| High-rank noise | Stress-test | 5,000 | 200 | 2 | Representational stress-test |
 | Covertype | Large-scale | 581,012 | 54 | 7 | Tests overhead at scale |
 
 The stress-test dataset (high-rank noise) cannot be included merely as

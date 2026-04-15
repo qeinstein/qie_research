@@ -197,7 +197,7 @@
       "label_range": [0, 1],
       "dtype_X": "float64",
       "dtype_y": "int64",
-      "notes": "Synthetic parity task: label = XOR of the 5 highest-variance binary features. Specifically designed to require non-linear feature interactions that a linear classifier cannot capture without a powerful feature map. Generated deterministically via sklearn.datasets.make_classification with fixed seed.",
+      "notes": "Synthetic parity task with continuous features: X is generated at runtime with float64 values sampled uniformly from [-1, 1]. Labels are binary and derived from the parity induced by the sign of the product of the first n_parity_bits features (equivalently, whether an odd or even number of those features are negative). This is designed to require non-linear feature interactions that a linear classifier cannot capture without a powerful feature map.",
       "provenance_url": null,
       "license": "none (synthetic)"
     },

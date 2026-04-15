@@ -1,0 +1,81 @@
+{
+  "run": {
+    "name": "smoke_test_wine",
+    "seed": 42,
+    "config_path": "configs/smoke_test.yaml",
+    "timestamp": "2026-04-15T13:08:52.121639+00:00"
+  },
+  "dataset": {
+    "name": "wine",
+    "n_train": 142,
+    "n_test": 36,
+    "n_features": 13,
+    "n_classes": 3
+  },
+  "results": [
+    {
+      "encoding": "amplitude",
+      "encoding_params": {
+        "pad_to_power_of_two": true
+      },
+      "input_dim": 13,
+      "output_dim": 16,
+      "metrics": {
+        "accuracy": 0.666667,
+        "f1_macro": 0.536364
+      },
+      "timing_seconds": {
+        "encoding": 0.000753,
+        "training": 0.014812,
+        "total": 0.015565
+      },
+      "memory_bytes": {
+        "encoding_peak": 51144,
+        "training_peak": 51782
+      }
+    },
+    {
+      "encoding": "angle",
+      "encoding_params": {
+        "scale": 3.141592653589793,
+        "standardize": true
+      },
+      "input_dim": 13,
+      "output_dim": 26,
+      "metrics": {
+        "accuracy": 0.972222,
+        "f1_macro": 0.970962
+      },
+      "timing_seconds": {
+        "encoding": 0.000445,
+        "training": 0.014658,
+        "total": 0.015103
+      },
+      "memory_bytes": {
+        "encoding_peak": 104592,
+        "training_peak": 61375
+      }
+    },
+    {
+      "encoding": "basis",
+      "encoding_params": {
+        "n_bits": 8
+      },
+      "input_dim": 13,
+      "output_dim": 104,
+      "metrics": {
+        "accuracy": 0.916667,
+        "f1_macro": 0.915147
+      },
+      "timing_seconds": {
+        "encoding": 0.000481,
+        "training": 0.037246,
+        "total": 0.037727
+      },
+      "memory_bytes": {
+        "encoding_peak": 215640,
+        "training_peak": 139710
+      }
+    }
+  ]
+}

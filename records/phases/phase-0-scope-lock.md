@@ -101,16 +101,16 @@ fairness rule was changed.
 
 ### Physics / Large-Scale
 
-- **HIGGS (500k subset)** — 500,000 samples, 21 features, binary.  Canonical
+- **HIGGS (500k subset)** — 500,000 samples, 28 features, binary.  Canonical
   large-scale benchmark in the quantum ML literature.  Reviewers familiar with
   QML papers will specifically expect this dataset.
 
 ### Synthetic
 
-- **High-dimensional parity** — 2,000 samples, 50 features, binary.  Provably
+- **High-dimensional parity** — 10,000 samples, 20 features, binary.  Provably
   hard for linear models.  Label is determined by the parity of the signs of
   the first 5 features, giving a known decision boundary for controlled analysis.
-- **High-rank noise** — 2,000 samples, 100 features, binary.  Low-rank signal
+- **High-rank noise** — 5,000 samples, 200 features, binary.  Low-rank signal
   embedded in high-rank isotropic noise.  Directly tests whether encodings that
   collapse to low-dimensional representations fail under representational pressure.
 

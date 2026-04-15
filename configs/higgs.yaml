@@ -1,0 +1,26 @@
+run:
+  name: higgs
+  seed: 42
+  output_dir: results/metrics/
+
+dataset:
+  name: higgs
+  test_size: 0.2
+  data_home: data/raw/
+  max_samples: 500000
+
+encodings:
+  - name: amplitude
+    pad_to_power_of_two: true
+
+  - name: angle
+    scale: 3.141592653589793
+    standardize: true
+
+  - name: basis
+    n_bits: 8
+
+model:
+  name: logistic_regression
+  max_iter: 1000
+  C: 1.0

@@ -1,0 +1,81 @@
+{
+  "run": {
+    "name": "high_rank_noise",
+    "seed": 42,
+    "config_path": "configs/high_rank_noise.yaml",
+    "timestamp": "2026-04-15T19:48:16.279852+00:00"
+  },
+  "dataset": {
+    "name": "high_rank_noise",
+    "n_train": 4000,
+    "n_test": 1000,
+    "n_features": 200,
+    "n_classes": 2
+  },
+  "results": [
+    {
+      "encoding": "amplitude",
+      "encoding_params": {
+        "pad_to_power_of_two": true
+      },
+      "input_dim": 200,
+      "output_dim": 256,
+      "metrics": {
+        "accuracy": 0.937,
+        "f1_macro": 0.936982
+      },
+      "timing_seconds": {
+        "encoding": 0.026581,
+        "training": 0.184654,
+        "total": 0.211235
+      },
+      "memory_bytes": {
+        "encoding_peak": 21026328,
+        "training_peak": 248777
+      }
+    },
+    {
+      "encoding": "angle",
+      "encoding_params": {
+        "scale": 3.141592653589793,
+        "standardize": true
+      },
+      "input_dim": 200,
+      "output_dim": 400,
+      "metrics": {
+        "accuracy": 0.844,
+        "f1_macro": 0.84399
+      },
+      "timing_seconds": {
+        "encoding": 0.152318,
+        "training": 0.331378,
+        "total": 0.483696
+      },
+      "memory_bytes": {
+        "encoding_peak": 44804784,
+        "training_peak": 278505
+      }
+    },
+    {
+      "encoding": "basis",
+      "encoding_params": {
+        "n_bits": 8
+      },
+      "input_dim": 200,
+      "output_dim": 1600,
+      "metrics": {
+        "accuracy": 0.862,
+        "f1_macro": 0.861892
+      },
+      "timing_seconds": {
+        "encoding": 0.225935,
+        "training": 0.552443,
+        "total": 0.778378
+      },
+      "memory_bytes": {
+        "encoding_peak": 92806414,
+        "training_peak": 650548
+      }
+    }
+  ]
+}

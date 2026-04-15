@@ -1,0 +1,81 @@
+{
+  "run": {
+    "name": "high_dim_parity",
+    "seed": 42,
+    "config_path": "configs/high_dim_parity.yaml",
+    "timestamp": "2026-04-15T19:48:12.170616+00:00"
+  },
+  "dataset": {
+    "name": "high_dim_parity",
+    "n_train": 8000,
+    "n_test": 2000,
+    "n_features": 20,
+    "n_classes": 2
+  },
+  "results": [
+    {
+      "encoding": "amplitude",
+      "encoding_params": {
+        "pad_to_power_of_two": true
+      },
+      "input_dim": 20,
+      "output_dim": 32,
+      "metrics": {
+        "accuracy": 0.499,
+        "f1_macro": 0.498578
+      },
+      "timing_seconds": {
+        "encoding": 0.006275,
+        "training": 0.010976,
+        "total": 0.017251
+      },
+      "memory_bytes": {
+        "encoding_peak": 4674328,
+        "training_peak": 311918
+      }
+    },
+    {
+      "encoding": "angle",
+      "encoding_params": {
+        "scale": 3.141592653589793,
+        "standardize": true
+      },
+      "input_dim": 20,
+      "output_dim": 40,
+      "metrics": {
+        "accuracy": 0.5005,
+        "f1_macro": 0.499905
+      },
+      "timing_seconds": {
+        "encoding": 0.021876,
+        "training": 0.019618,
+        "total": 0.041493
+      },
+      "memory_bytes": {
+        "encoding_peak": 8961925,
+        "training_peak": 302715
+      }
+    },
+    {
+      "encoding": "basis",
+      "encoding_params": {
+        "n_bits": 8
+      },
+      "input_dim": 20,
+      "output_dim": 160,
+      "metrics": {
+        "accuracy": 0.518,
+        "f1_macro": 0.517877
+      },
+      "timing_seconds": {
+        "encoding": 0.028431,
+        "training": 0.255023,
+        "total": 0.283454
+      },
+      "memory_bytes": {
+        "encoding_peak": 18562062,
+        "training_peak": 340266
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+run:
+  name: high_dim_parity
+  seed: 42
+  output_dir: results/metrics/
+
+dataset:
+  name: high_dim_parity
+  test_size: 0.2
+  n_samples: 10000
+  n_features: 20
+  n_parity_bits: 5
+  seed: 42
+
+encodings:
+  - name: amplitude
+    pad_to_power_of_two: true
+
+  - name: angle
+    scale: 3.141592653589793
+    standardize: true
+
+  - name: basis
+    n_bits: 8
+
+model:
+  name: logistic_regression
+  max_iter: 1000
+  C: 1.0

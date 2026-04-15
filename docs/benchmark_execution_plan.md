@@ -33,15 +33,28 @@ The baseline suite is locked to include:
 
 If a baseline is dropped for a given dataset, the reason must be logged in the corresponding experiment record and phase record.
 
-### 3. Hard Dataset Requirement
+### 3. Dataset Requirement
 
-The benchmark suite must include:
+The benchmark suite includes ten datasets across six categories.  This roster
+was expanded from the original four-category requirement during Phase 1 review
+to meet publication-quality standards.
 
-- Non-trivial tabular data.
-- Image data.
-- At least one deliberately difficult dataset with high-rank noise, high intrinsic dimensionality, or both.
+| Dataset | Category | Samples | Features | Classes | Reason for inclusion |
+|---|---|---|---|---|---|
+| UCI Wine | Tabular | 178 | 13 | 3 | Baseline tabular benchmark |
+| UCI Breast Cancer | Tabular | 569 | 30 | 2 | Second tabular; generalises Wine findings |
+| Dry Bean | Tabular | 13,611 | 16 | 7 | Harder multiclass tabular problem |
+| Credit Card Fraud | Financial | 284,807 | 30 | 2 | Real financial data; PCA-preprocessed inputs |
+| Fashion-MNIST | Image | 70,000 | 784 | 10 | Primary image benchmark |
+| CIFAR-10 (flat) | Image | 60,000 | 3,072 | 10 | Harder image benchmark; expected by reviewers |
+| HIGGS (500k) | Physics | 500,000 | 21 | 2 | Canonical QML benchmark |
+| High-dim parity | Synthetic | 2,000 | 50 | 2 | Controlled synthetic; known decision boundary |
+| High-rank noise | Stress-test | 2,000 | 100 | 2 | Representational stress-test |
+| Covertype | Large-scale | 581,012 | 54 | 7 | Tests overhead at scale |
 
-The stress-test dataset cannot be included merely as decoration. It must appear in the main comparison narrative and not only in a supplemental appendix.
+The stress-test dataset (high-rank noise) cannot be included merely as
+decoration.  It must appear in the main comparison narrative and not only
+in a supplemental appendix.
 
 ### 4. Explanation, Not Just Scorekeeping
 

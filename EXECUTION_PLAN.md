@@ -45,15 +45,55 @@ No new encodings are added after Phase 0 unless a decision record explicitly reo
 
 ## Dataset Plan
 
-The benchmark suite must include:
+The benchmark suite includes ten datasets across six categories.  This roster
+was expanded from the original four-category envelope during Phase 1 review.
+The expansion strengthens breadth of evidence and meets the standard expected
+of a publication-quality benchmark.  No encoding, baseline, or fairness rule
+was changed.
 
-- Non-trivial tabular data, such as UCI Wine or Breast Cancer.
-- Image data, with Fashion-MNIST preferred over easy MNIST-only claims.
-- A synthetic high-dimensional dataset such as high-dimensional parity or XOR.
-- At least one stress-test dataset with high-rank noise or high intrinsic dimensionality.
-- Optional financial or other high-dimensional structured data only if provenance and reproducibility are clean.
+### Tabular
 
-Pruning rules:
+- UCI Wine (178 samples, 13 features, 3 classes) — baseline tabular benchmark.
+- UCI Breast Cancer (569 samples, 30 features, binary) — second tabular
+  benchmark; increases confidence that tabular findings generalise beyond Wine.
+- Dry Bean (13,611 samples, 16 features, 7 classes) — harder multiclass
+  tabular problem; tests QIE geometry under more classes and larger sample counts.
+
+### Financial
+
+- Credit Card Fraud Detection (284,807 samples, 30 PCA features, binary,
+  imbalanced) — real financial data with clean public provenance; PCA
+  preprocessing tests whether QIE adds value on top of an existing linear
+  projection.
+
+### Image
+
+- Fashion-MNIST (70,000 samples, 784 features, 10 classes) — satisfies the
+  image category requirement; preferred over plain MNIST.
+- CIFAR-10 flattened (60,000 samples, 3,072 features, 10 classes) — harder
+  image benchmark with richer texture and colour structure; expected by
+  reviewers at top venues alongside Fashion-MNIST.
+
+### Physics / Large-Scale
+
+- HIGGS 500k subset (500,000 samples, 21 features, binary) — canonical
+  large-scale benchmark in the quantum ML literature; reviewers familiar with
+  QML papers will specifically expect this dataset.
+
+### Synthetic
+
+- High-dimensional parity (2,000 samples, 50 features, binary) — provably
+  hard for linear models; known decision boundary for controlled analysis.
+- High-rank noise (2,000 samples, 100 features, binary) — low-rank signal
+  in high-rank isotropic noise; stress-tests encodings that collapse to
+  low-dimensional representations.
+
+### Large-Scale Tabular
+
+- Covertype (581,012 samples, 54 features, 7 classes) — tests whether
+  encoding overhead remains practical at large scale.
+
+### Pruning rules
 
 - Drop datasets where a linear model exceeds 95 percent performance unless the dataset is retained only as a smoke test.
 - Drop datasets where no method beats random chance plus a documented tolerance.
@@ -172,18 +212,22 @@ Rule:
 
 ### Week 3: Dataset Expansion and Stress Testing
 
-Final dataset categories:
+Final dataset roster (ten datasets across six categories):
 
-- Tabular benchmark.
-- Image benchmark.
-- Synthetic high-dimensional parity, XOR, or related stress benchmark.
-- High-rank-noise or high-intrinsic-dimensional dataset.
+- Tabular: UCI Wine, UCI Breast Cancer, Dry Bean.
+- Financial: Credit Card Fraud Detection.
+- Image: Fashion-MNIST, CIFAR-10 (flattened).
+- Physics / Large-Scale: HIGGS (500k subset).
+- Synthetic: High-dimensional parity, High-rank noise.
+- Large-Scale Tabular: Covertype.
 
 Deliverables:
 
 - Frozen dataset registry.
 - Provenance and checksum records.
 - Dataset pruning decisions with reasons.
+- Data preparation instructions for datasets requiring local caching
+  (Fashion-MNIST, CIFAR-10, HIGGS, Covertype, Credit Card Fraud).
 
 ### Week 4: Full Experimental Sweep
 

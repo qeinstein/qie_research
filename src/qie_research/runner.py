@@ -48,13 +48,13 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sklearn.datasets import load_wine
+from sklearn.datasets import fetch_openml, load_wine
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 from qie_research.encodings import ENCODING_REGISTRY
-
 
 # Dataset registry
 
@@ -63,8 +63,333 @@ def _load_wine(params: dict) -> tuple[np.ndarray, np.ndarray]:
     return data.data, data.target
 
 
+def _load_fashion_mnist(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Load Fashion-MNIST from numpy cache files.
+
+    The cache files (fashion_mnist_X.npy, fashion_mnist_y.npy) must be
+    generated once using the helper script:
+
+        python -m qie_research.datasets.prepare_fashion_mnist
+
+    Raw pixel values are normalised to [0, 1].  The full dataset is 70,000
+    samples x 784 features (flattened 28x28 images).  The config may specify
+    max_samples to subsample for faster runs during development.
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "fashion_mnist_X.npy"
+    cache_y = data_home / "fashion_mnist_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"Fashion-MNIST cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_fashion_mnist"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_high_dim_parity(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Synthetic high-dimensional parity dataset.
+
+    Each sample is a vector of d continuous features drawn from U[-1, 1].
+    The label is the parity of the signs of the first k features:
+
+        y = (sign(x_1) * sign(x_2) * ... * sign(x_k) > 0) ? 1 : 0
+
+    This is provably hard for linear models at high dimension and provides
+    a controlled test of representational capacity.
+
+    Config keys
+    -----------
+    n_samples : int, default 2000
+    n_features : int, default 50
+    n_parity_bits : int, default 5   (number of features that determine label)
+    seed : int, default 42
+    """
+    seed = params.get("seed", 42)
+    n_samples = int(params.get("n_samples", 2000))
+    n_features = int(params.get("n_features", 50))
+    n_parity_bits = int(params.get("n_parity_bits", 5))
+
+    rng = np.random.default_rng(seed)
+    X = rng.uniform(-1.0, 1.0, size=(n_samples, n_features))
+    parity = np.prod(np.sign(X[:, :n_parity_bits]), axis=1)
+    y = (parity > 0).astype(int)
+
+    return X, y
+
+
+def _load_high_rank_noise(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Synthetic high-rank noise stress-test dataset.
+
+    A low-rank signal matrix is constructed from k latent components,
+    then isotropic Gaussian noise is added at a controlled signal-to-noise
+    ratio.  The resulting feature matrix has high intrinsic rank, making it
+    a genuine stress test for encodings that collapse to low-dimensional
+    representations (e.g. amplitude encoding).
+
+    The classification task separates two Gaussian clusters embedded in
+    this high-dimensional noisy space.
+
+    Config keys
+    -----------
+    n_samples : int, default 2000
+    n_features : int, default 100
+    n_signal_components : int, default 5
+    noise_std : float, default 1.0
+    seed : int, default 42
+    """
+    seed = params.get("seed", 42)
+    n_samples = int(params.get("n_samples", 2000))
+    n_features = int(params.get("n_features", 100))
+    n_signal = int(params.get("n_signal_components", 5))
+    noise_std = float(params.get("noise_std", 1.0))
+
+    rng = np.random.default_rng(seed)
+
+    # Low-rank signal: two clusters separated along the first signal component
+    latent = rng.standard_normal((n_samples, n_signal))
+    basis = rng.standard_normal((n_signal, n_features))
+    basis /= np.linalg.norm(basis, axis=1, keepdims=True)
+
+    y = (latent[:, 0] > 0).astype(int)
+    latent[y == 1, 0] += 2.0   # shift cluster 1 along first component
+
+    X = latent @ basis + rng.normal(0, noise_std, size=(n_samples, n_features))
+
+    return X, y
+
+
+def _load_breast_cancer(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    UCI Breast Cancer Wisconsin dataset.
+
+    569 samples, 30 features, binary classification (malignant/benign).
+    Loaded directly from sklearn — no download required.
+    """
+    from sklearn.datasets import load_breast_cancer
+    data = load_breast_cancer()
+    return data.data, data.target
+
+
+def _load_dry_bean(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    UCI Dry Bean dataset.
+
+    13,611 samples, 16 features, 7 classes.  Loaded from numpy cache.
+    Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_dry_bean
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "dry_bean_X.npy"
+    cache_y = data_home / "dry_bean_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"Dry Bean cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_dry_bean"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_credit_card_fraud(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Credit Card Fraud Detection dataset.
+
+    284,807 samples, 30 PCA-transformed features, binary (highly imbalanced).
+    Loaded from numpy cache.  Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_credit_card_fraud
+
+    The raw CSV is available from:
+    https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "credit_card_fraud_X.npy"
+    cache_y = data_home / "credit_card_fraud_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"Credit Card Fraud cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_credit_card_fraud"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_cifar10(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    CIFAR-10 dataset, flattened to 3072-dimensional vectors.
+
+    60,000 samples, 3,072 features (32x32x3 flattened), 10 classes.
+    Pixel values normalised to [0, 1].
+    Loaded from numpy cache.  Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_cifar10
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "cifar10_X.npy"
+    cache_y = data_home / "cifar10_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"CIFAR-10 cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_cifar10"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_higgs(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    HIGGS dataset (500k subset).
+
+    500,000 samples, 21 features, binary classification.
+    Canonical large-scale benchmark in the quantum ML literature.
+    Loaded from numpy cache.  Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_higgs
+
+    The raw dataset is available from the UCI ML Repository:
+    https://archive.ics.uci.edu/dataset/280/higgs
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, default 500000
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "higgs_X.npy"
+    cache_y = data_home / "higgs_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"HIGGS cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_higgs"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", 500_000)
+    if max_samples is not None and int(max_samples) < len(X):
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_covertype(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Forest Covertype dataset.
+
+    581,012 samples, 54 features, 7 classes.
+    Loaded via sklearn fetch_covtype — no manual download required.
+    sklearn caches the download automatically.
+
+    Config keys
+    -----------
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    from sklearn.datasets import fetch_covtype
+    data = fetch_covtype()
+    X = data.data.astype(float)
+    y = (data.target - 1).astype(int)   # sklearn returns 1-indexed labels
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
 DATASET_REGISTRY: dict[str, callable] = {
     "wine": _load_wine,
+    "breast_cancer": _load_breast_cancer,
+    "dry_bean": _load_dry_bean,
+    "credit_card_fraud": _load_credit_card_fraud,
+    "fashion_mnist": _load_fashion_mnist,
+    "cifar10": _load_cifar10,
+    "higgs": _load_higgs,
+    "covertype": _load_covertype,
+    "high_dim_parity": _load_high_dim_parity,
+    "high_rank_noise": _load_high_rank_noise,
 }
 
 

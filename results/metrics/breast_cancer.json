@@ -1,0 +1,81 @@
+{
+  "run": {
+    "name": "breast_cancer",
+    "seed": 42,
+    "config_path": "configs/breast_cancer.yaml",
+    "timestamp": "2026-04-15T19:48:08.712194+00:00"
+  },
+  "dataset": {
+    "name": "breast_cancer",
+    "n_train": 455,
+    "n_test": 114,
+    "n_features": 30,
+    "n_classes": 2
+  },
+  "results": [
+    {
+      "encoding": "amplitude",
+      "encoding_params": {
+        "pad_to_power_of_two": true
+      },
+      "input_dim": 30,
+      "output_dim": 32,
+      "metrics": {
+        "accuracy": 0.789474,
+        "f1_macro": 0.728571
+      },
+      "timing_seconds": {
+        "encoding": 0.001328,
+        "training": 0.045144,
+        "total": 0.046472
+      },
+      "memory_bytes": {
+        "encoding_peak": 340848,
+        "training_peak": 63744
+      }
+    },
+    {
+      "encoding": "angle",
+      "encoding_params": {
+        "scale": 3.141592653589793,
+        "standardize": true
+      },
+      "input_dim": 30,
+      "output_dim": 60,
+      "metrics": {
+        "accuracy": 0.95614,
+        "f1_macro": 0.953106
+      },
+      "timing_seconds": {
+        "encoding": 0.002582,
+        "training": 0.014864,
+        "total": 0.017446
+      },
+      "memory_bytes": {
+        "encoding_peak": 766485,
+        "training_peak": 61678
+      }
+    },
+    {
+      "encoding": "basis",
+      "encoding_params": {
+        "n_bits": 8
+      },
+      "input_dim": 30,
+      "output_dim": 240,
+      "metrics": {
+        "accuracy": 0.947368,
+        "f1_macro": 0.942867
+      },
+      "timing_seconds": {
+        "encoding": 0.003489,
+        "training": 0.034186,
+        "total": 0.037675
+      },
+      "memory_bytes": {
+        "encoding_peak": 1585702,
+        "training_peak": 118803
+      }
+    }
+  ]
+}

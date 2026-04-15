@@ -177,6 +177,7 @@ def train_linear_head(
     for _ in range(n_epochs):
         perm = torch.randperm(len(X_tr), device=device)
         epoch_loss = 0.0
+        epoch_grad_norm = 0.0
         n_batches = 0
 
         for i in range(0, len(X_tr), batch_size):
@@ -190,10 +191,11 @@ def train_linear_head(
             optimizer.step()
 
             epoch_loss += loss.item()
+            epoch_grad_norm += gn
             n_batches += 1
 
         train_losses.append(round(epoch_loss / n_batches, 6))
-        grad_norms.append(round(gn, 6))
+        grad_norms.append(round(epoch_grad_norm / n_batches, 6))
 
     elapsed = time.perf_counter() - t0
     _, peak_mem = tracemalloc.get_traced_memory()
@@ -335,6 +337,7 @@ def train_mlp(
     for _ in range(n_epochs):
         perm = torch.randperm(len(X_tr), device=device)
         epoch_loss = 0.0
+        epoch_grad_norm = 0.0
         n_batches = 0
 
         for i in range(0, len(X_tr), batch_size):
@@ -348,10 +351,11 @@ def train_mlp(
             optimizer.step()
 
             epoch_loss += loss.item()
+            epoch_grad_norm += gn
             n_batches += 1
 
         train_losses.append(round(epoch_loss / n_batches, 6))
-        grad_norms.append(round(gn, 6))
+        grad_norms.append(round(epoch_grad_norm / n_batches, 6))
 
     elapsed = time.perf_counter() - t0
     _, peak_mem = tracemalloc.get_traced_memory()

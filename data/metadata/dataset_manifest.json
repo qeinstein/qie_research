@@ -145,7 +145,7 @@
       "prep_command": "python -m qie_research.datasets.prepare_higgs",
       "cache_files": {
         "X": "data/raw/higgs_X.npy",
-        "y": "data/raw/higgs_Y.npy"
+        "y": "data/raw/higgs_y.npy"
       },
       "runner_key": "higgs",
       "n_samples": 500000,

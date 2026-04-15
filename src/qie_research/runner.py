@@ -703,10 +703,41 @@ def _run_baseline(
         subsampled_n = int(max_samples)
 
     # ── Model step ───────────────────────────────────────────────────────────
+
+    # Special case: torch_mlp uses the PyTorch training path instead of
+    # sklearn.  It handles its own scaling, subsampling, and curve logging.
+    if model_cfg["name"] == "torch_mlp":
+        from qie_research.models.torch_trainer import train_mlp
+        torch_params = {k: v for k, v in model_cfg.items() if k != "name"}
+        # Honour max_samples from the baseline block (already computed above).
+        if subsampled_n is not None:
+            torch_params.setdefault("max_samples", subsampled_n)
+        result = train_mlp(
+            X_train, y_train, X_test, y_test,
+            seed=seed,
+            hidden_layer_sizes=torch_params.pop("hidden_layer_sizes", [256, 128]),
+            n_epochs=int(torch_params.pop("epochs", 100)),
+            lr=float(torch_params.pop("lr", 1e-3)),
+            weight_decay=float(torch_params.pop("weight_decay", 1e-4)),
+            batch_size=int(torch_params.pop("batch_size", 256)),
+            max_samples=torch_params.pop("max_samples", None),
+        )
+        return {
+            "name": baseline_name,
+            "feature_map": None,
+            "feature_map_params": None,
+            "model": "torch_mlp",
+            "model_params": {k: v for k, v in model_cfg.items() if k != "name"},
+            "input_dim": int(X_train.shape[1]),
+            "feature_dim": int(X_train.shape[1]),
+            "subsampled_train_n": result.pop("subsampled_train_n", None),
+            **result,
+        }
+
     if model_cfg["name"] not in MODEL_REGISTRY:
         raise ValueError(
             f"Unknown model '{model_cfg['name']}'. "
-            f"Available: {list(MODEL_REGISTRY.keys())}"
+            f"Available: {list(MODEL_REGISTRY.keys())} or 'torch_mlp'"
         )
 
     model_params = {k: v for k, v in model_cfg.items() if k != "name"}
@@ -727,6 +758,7 @@ def _run_baseline(
         "feature_dim": feature_dim,
         "subsampled_train_n": subsampled_n,
         "metrics": metrics,
+        "training_curves": None,
         "timing_seconds": {
             "feature_map": round(fm_elapsed, 6),
             "training": round(train_elapsed, 6),
@@ -820,10 +852,29 @@ def run(config_path: str | Path) -> dict:
         model_params["_seed"] = seed
         model = MODEL_REGISTRY[model_cfg["name"]](model_params)
 
-        # Train and evaluate
+        # Train and evaluate (sklearn linear head)
         metrics, train_time, train_mem = _train_and_evaluate(
             model, X_train_enc, y_train, X_test_enc, y_test
         )
+
+        # ── Optional PyTorch linear head ─────────────────────────────────────
+        # Activated when the config contains a top-level ``torch:`` block.
+        # Trains nn.Linear on the frozen encoded features and records
+        # per-epoch loss and gradient norm curves.
+        torch_cfg = cfg["run"].get("torch", None)
+        if torch_cfg is not None:
+            from qie_research.models.torch_trainer import train_linear_head
+            torch_result = train_linear_head(
+                X_train_enc, y_train, X_test_enc, y_test,
+                n_epochs=int(torch_cfg.get("epochs", 100)),
+                lr=float(torch_cfg.get("lr", 1e-3)),
+                weight_decay=float(torch_cfg.get("weight_decay", 1e-4)),
+                batch_size=int(torch_cfg.get("batch_size", 256)),
+                seed=seed,
+                encoding_name=enc_name,
+            )
+        else:
+            torch_result = None
 
         encoding_results.append({
             "encoding": enc_name,
@@ -840,6 +891,7 @@ def run(config_path: str | Path) -> dict:
                 "encoding_peak": enc_mem,
                 "training_peak": train_mem,
             },
+            "torch_linear_head": torch_result,
         })
 
     # ── Classical baselines ──────────────────────────────────────────────────
@@ -913,13 +965,14 @@ def main() -> None:
         print("\nClassical Baselines")
         print("-" * 62)
         for b in results["baselines"]:
-            fm = f"+{b['feature_map']}" if b["feature_map"] else ""
-            sub = f"  (subsample={b['subsampled_train_n']})" if b["subsampled_train_n"] else ""
+            sub = f"  (subsample={b['subsampled_train_n']})" if b.get("subsampled_train_n") else ""
+            t = b["timing_seconds"]
+            total = t if isinstance(t, (int, float)) else t["total"]
             print(
                 f"  {b['name']:<18}"
                 f"  accuracy={b['metrics']['accuracy']:.4f}"
                 f"  f1={b['metrics']['f1_macro']:.4f}"
-                f"  total={b['timing_seconds']['total']:.4f}s"
+                f"  total={total:.4f}s"
                 f"  d_feat={b['feature_dim']}"
                 f"{sub}"
             )

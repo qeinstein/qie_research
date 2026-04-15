@@ -140,8 +140,24 @@ to `Locked`.
 - [x] Dependencies pinned in [`requirements.txt`](../../requirements.txt).
 - [x] Package installable via [`pyproject.toml`](../../pyproject.toml).
 
+## Known Gaps
+
+**Loss curve and gradient norm logging are not implemented.**
+
+The Week 1 spec lists these as required logging targets, but both require a
+differentiable model with an explicit training loop.  The current runner uses
+scikit-learn's `LogisticRegression`, which is a black-box solver that exposes
+neither per-iteration loss nor gradients.
+
+This is deferred to Phase 4 when the full model suite is built.  A PyTorch
+or JAX model with an explicit training loop will log loss per epoch and
+gradient norm per epoch as part of the benchmark sweep.  NTK analysis in
+Phase 5 also requires a differentiable model, so this gap is resolved
+naturally at that stage.
+
 ## Closure Statement
 
 Phase 1 infrastructure is complete. The runner is deterministic, config-driven,
-and executable by a teammate from a single command. Phase 2 numerical behavior
-audit may begin.
+and executable by a teammate from a single command. Loss and gradient norm
+logging are deferred to Phase 4 pending a differentiable model.
+Phase 2 numerical behavior audit may begin.

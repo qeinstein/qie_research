@@ -1,0 +1,16 @@
+# Phase 4 Seed Registry
+# -----------------------
+# These five seeds are used for every (dataset, method) combination in the
+# Phase 4 benchmark sweep. This ensures that every comparison is paired
+# across the same data splits and initializations, allowing for rigorous
+# mean/std reporting and paired statistical tests.
+
+seeds:
+  - 42    # The baseline "smoke test" seed used in Phase 1 & 2.
+  - 1337  # Standard high-entropy seed.
+  - 2026  # The project year seed.
+  - 7     # Low-value seed for variance testing.
+  - 99    # High-value seed for variance testing.
+
+# Total runs per dataset = 5 seeds * (3 QIE encodings + 7 Baselines) = 50 runs.
+# Total runs for the 10-dataset sweep = 500 runs.

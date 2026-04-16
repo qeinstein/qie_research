@@ -48,13 +48,18 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sklearn.datasets import load_wine
+from sklearn.datasets import fetch_openml, load_wine
+from sklearn.decomposition import PCA
+from sklearn.kernel_approximation import RBFSampler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder, PolynomialFeatures, StandardScaler
+from sklearn.svm import SVC
 
 from qie_research.encodings import ENCODING_REGISTRY
-
 
 # Dataset registry
 
@@ -63,8 +68,423 @@ def _load_wine(params: dict) -> tuple[np.ndarray, np.ndarray]:
     return data.data, data.target
 
 
+def _load_fashion_mnist(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Load Fashion-MNIST from numpy cache files.
+
+    The cache files (fashion_mnist_X.npy, fashion_mnist_y.npy) must be
+    generated once using the helper script:
+
+        python -m qie_research.datasets.prepare_fashion_mnist
+
+    Raw pixel values are normalised to [0, 1].  The full dataset is 70,000
+    samples x 784 features (flattened 28x28 images).  The config may specify
+    max_samples to subsample for faster runs during development.
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "fashion_mnist_X.npy"
+    cache_y = data_home / "fashion_mnist_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"Fashion-MNIST cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_fashion_mnist"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_high_dim_parity(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Synthetic high-dimensional parity dataset.
+
+    Each sample is a vector of d continuous features drawn from U[-1, 1].
+    The label is the parity of the signs of the first k features:
+
+        y = (sign(x_1) * sign(x_2) * ... * sign(x_k) > 0) ? 1 : 0
+
+    This is provably hard for linear models at high dimension and provides
+    a controlled test of representational capacity.
+
+    Config keys
+    -----------
+    n_samples : int, default 2000
+    n_features : int, default 50
+    n_parity_bits : int, default 5   (number of features that determine label)
+    seed : int, default 42
+    """
+    seed = params.get("seed", 42)
+    n_samples = int(params.get("n_samples", 2000))
+    n_features = int(params.get("n_features", 50))
+    n_parity_bits = int(params.get("n_parity_bits", 5))
+
+    rng = np.random.default_rng(seed)
+    X = rng.uniform(-1.0, 1.0, size=(n_samples, n_features))
+    parity = np.prod(np.sign(X[:, :n_parity_bits]), axis=1)
+    y = (parity > 0).astype(int)
+
+    return X, y
+
+
+def _load_high_rank_noise(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Synthetic high-rank noise stress-test dataset.
+
+    A low-rank signal matrix is constructed from k latent components,
+    then isotropic Gaussian noise is added at a controlled signal-to-noise
+    ratio.  The resulting feature matrix has high intrinsic rank, making it
+    a genuine stress test for encodings that collapse to low-dimensional
+    representations (e.g. amplitude encoding).
+
+    The classification task separates two Gaussian clusters embedded in
+    this high-dimensional noisy space.
+
+    Config keys
+    -----------
+    n_samples : int, default 2000
+    n_features : int, default 100
+    n_signal_components : int, default 5
+    noise_std : float, default 1.0
+    seed : int, default 42
+    """
+    seed = params.get("seed", 42)
+    n_samples = int(params.get("n_samples", 2000))
+    n_features = int(params.get("n_features", 100))
+    n_signal = int(params.get("n_signal_components", 5))
+    noise_std = float(params.get("noise_std", 1.0))
+
+    rng = np.random.default_rng(seed)
+
+    # Low-rank signal: two clusters separated along the first signal component
+    latent = rng.standard_normal((n_samples, n_signal))
+    basis = rng.standard_normal((n_signal, n_features))
+    basis /= np.linalg.norm(basis, axis=1, keepdims=True)
+
+    y = (latent[:, 0] > 0).astype(int)
+    latent[y == 1, 0] += 2.0   # shift cluster 1 along first component
+
+    X = latent @ basis + rng.normal(0, noise_std, size=(n_samples, n_features))
+
+    return X, y
+
+
+def _load_breast_cancer(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    UCI Breast Cancer Wisconsin dataset.
+
+    569 samples, 30 features, binary classification (malignant/benign).
+    Loaded directly from sklearn — no download required.
+    """
+    from sklearn.datasets import load_breast_cancer
+    data = load_breast_cancer()
+    return data.data, data.target
+
+
+def _load_dry_bean(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    UCI Dry Bean dataset.
+
+    13,611 samples, 16 features, 7 classes.  Loaded from numpy cache.
+    Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_dry_bean
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "dry_bean_X.npy"
+    cache_y = data_home / "dry_bean_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"Dry Bean cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_dry_bean"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_credit_card_fraud(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Credit Card Fraud Detection dataset.
+
+    284,807 samples, 30 PCA-transformed features, binary (highly imbalanced).
+    Loaded from numpy cache.  Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_credit_card_fraud
+
+    The raw CSV is available from:
+    https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "credit_card_fraud_X.npy"
+    cache_y = data_home / "credit_card_fraud_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"Credit Card Fraud cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_credit_card_fraud"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_cifar10(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    CIFAR-10 dataset, flattened to 3072-dimensional vectors.
+
+    60,000 samples, 3,072 features (32x32x3 flattened), 10 classes.
+    Pixel values normalised to [0, 1].
+    Loaded from numpy cache.  Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_cifar10
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "cifar10_X.npy"
+    cache_y = data_home / "cifar10_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"CIFAR-10 cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_cifar10"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_higgs(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    HIGGS dataset (500k subset).
+
+    500,000 samples, 21 features, binary classification.
+    Canonical large-scale benchmark in the quantum ML literature.
+    Loaded from numpy cache.  Cache must be generated once using:
+
+        python -m qie_research.datasets.prepare_higgs
+
+    The raw dataset is available from the UCI ML Repository:
+    https://archive.ics.uci.edu/dataset/280/higgs
+
+    Config keys
+    -----------
+    data_home : str, default "data/raw/"
+    max_samples : int, default 500000
+    seed : int, default 42
+    """
+    data_home = Path(params.get("data_home", "data/raw/"))
+    cache_X = data_home / "higgs_X.npy"
+    cache_y = data_home / "higgs_y.npy"
+
+    if not cache_X.exists() or not cache_y.exists():
+        raise FileNotFoundError(
+            f"HIGGS cache not found at {data_home}. "
+            "Run: python -m qie_research.datasets.prepare_higgs"
+        )
+
+    X = np.load(cache_X)
+    y = np.load(cache_y)
+
+    max_samples = params.get("max_samples", 500_000)
+    if max_samples is not None and int(max_samples) < len(X):
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
+def _load_covertype(params: dict) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Forest Covertype dataset.
+
+    581,012 samples, 54 features, 7 classes.
+    Loaded via sklearn fetch_covtype — no manual download required.
+    sklearn caches the download automatically.
+
+    Config keys
+    -----------
+    max_samples : int, optional
+    seed : int, default 42
+    """
+    from sklearn.datasets import fetch_covtype
+    data = fetch_covtype()
+    X = data.data.astype(float)
+    y = (data.target - 1).astype(int)   # sklearn returns 1-indexed labels
+
+    max_samples = params.get("max_samples", None)
+    if max_samples is not None:
+        rng = np.random.default_rng(params.get("seed", 42))
+        idx = rng.choice(len(X), size=int(max_samples), replace=False)
+        idx.sort()
+        X, y = X[idx], y[idx]
+
+    return X, y
+
+
 DATASET_REGISTRY: dict[str, callable] = {
     "wine": _load_wine,
+    "breast_cancer": _load_breast_cancer,
+    "dry_bean": _load_dry_bean,
+    "credit_card_fraud": _load_credit_card_fraud,
+    "fashion_mnist": _load_fashion_mnist,
+    "cifar10": _load_cifar10,
+    "higgs": _load_higgs,
+    "covertype": _load_covertype,
+    "high_dim_parity": _load_high_dim_parity,
+    "high_rank_noise": _load_high_rank_noise,
+}
+
+
+# Feature-map registry (for classical baselines that use an explicit transform)
+
+def _build_rff_map(params: dict, n_components_auto: int, seed: int,
+                   n_features: int = 1):
+    """
+    Random Fourier Features approximation of an RBF kernel.
+
+    Pipeline: StandardScaler → RBFSampler.  Scaling first means the gamma
+    heuristic makes sense: ``gamma='auto'`` (the default) sets
+    ``gamma = 1 / n_features`` which is equivalent to sklearn's ``'scale'``
+    heuristic on standardised data and gives a kernel that is neither
+    vanishingly narrow nor trivially flat.
+
+    n_components defaults to n_components_auto (mean QIE d_out for the run)
+    when the config specifies ``n_components: auto`` or omits the key.
+    """
+    n = params.get("n_components", "auto")
+    if n == "auto" or n is None:
+        n = n_components_auto
+    gamma_cfg = params.get("gamma", "auto")
+    if gamma_cfg == "auto" or gamma_cfg is None:
+        gamma = 1.0 / max(n_features, 1)
+    else:
+        gamma = float(gamma_cfg)
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("rff", RBFSampler(n_components=int(n), gamma=gamma, random_state=seed)),
+    ])
+
+
+def _build_poly_map(params: dict, n_components_auto: int, seed: int,
+                    n_features: int = 1):
+    """
+    Polynomial feature expansion followed by standardisation.
+
+    Pipeline: PolynomialFeatures → StandardScaler.  The scaler is essential:
+    cross-terms and powers have wildly different magnitudes without it, which
+    causes the downstream logistic regression to fail to converge.
+
+    degree defaults to 2.  include_bias=False avoids collinearity with the
+    logistic regression intercept term.
+    """
+    degree = int(params.get("degree", 2))
+    interaction_only = bool(params.get("interaction_only", False))
+    return Pipeline([
+        ("poly", PolynomialFeatures(
+            degree=degree,
+            interaction_only=interaction_only,
+            include_bias=False,
+        )),
+        ("scaler", StandardScaler()),
+    ])
+
+
+def _build_pca_map(params: dict, n_components_auto: int, seed: int,
+                   n_features: int = 1):
+    """
+    PCA projection as a learned linear embedding baseline.
+
+    n_components defaults to n_components_auto when the config specifies
+    ``n_components: auto`` or omits the key.  The runner caps the value at
+    min(n_features - 1, n_samples - 1) before constructing this object so
+    sklearn never receives an infeasible request.
+    """
+    n = params.get("n_components", "auto")
+    if n == "auto" or n is None:
+        n = n_components_auto
+    return PCA(n_components=int(n), random_state=seed)
+
+
+def _build_scaler_map(params: dict, n_components_auto: int, seed: int,
+                      n_features: int = 1):
+    """
+    StandardScaler as a standalone feature map.
+
+    Used for the 'raw_linear' baseline (scaled linear): applies mean-variance
+    normalisation to raw features before logistic regression.  This is the
+    'scaled linear' comparator required by the Phase 0 scope lock.
+    """
+    return StandardScaler()
+
+
+FEATURE_MAP_REGISTRY: dict[str, callable] = {
+    "scaler": _build_scaler_map,
+    "rff": _build_rff_map,
+    "polynomial": _build_poly_map,
+    "pca": _build_pca_map,
 }
 
 
@@ -78,8 +498,52 @@ def _build_logistic_regression(params: dict):
     )
 
 
+def _build_rbf_svm(params: dict):
+    """
+    SVM with RBF kernel.
+
+    Pipeline: StandardScaler → SVC.  Scaling is mandatory for gamma='scale'
+    to have the intended effect.  For large datasets, pass ``max_samples``
+    in the baseline config block to subsample before training.
+    """
+    C = float(params.get("C", 1.0))
+    gamma = params.get("gamma", "scale")
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("svc", SVC(kernel="rbf", C=C, gamma=gamma,
+                    random_state=params.get("_seed"))),
+    ])
+
+
+def _build_mlp(params: dict):
+    """
+    Multi-layer perceptron baseline.
+
+    Pipeline: StandardScaler → MLPClassifier.  early_stopping=True prevents
+    runaway training on large datasets.  hidden_layer_sizes defaults to
+    [256, 128] — a non-trivially shallow architecture that is not
+    intentionally underpowered.
+    """
+    hidden = params.get("hidden_layer_sizes", [256, 128])
+    max_iter = int(params.get("max_iter", 500))
+    alpha = float(params.get("alpha", 1e-4))
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("mlp", MLPClassifier(
+            hidden_layer_sizes=tuple(hidden),
+            max_iter=max_iter,
+            alpha=alpha,
+            early_stopping=True,
+            validation_fraction=0.1,
+            random_state=params.get("_seed"),
+        )),
+    ])
+
+
 MODEL_REGISTRY: dict[str, callable] = {
     "logistic_regression": _build_logistic_regression,
+    "rbf_svm": _build_rbf_svm,
+    "mlp": _build_mlp,
 }
 
 
@@ -150,6 +614,161 @@ def _train_and_evaluate(
         "f1_macro": round(float(f1_score(y_test, y_pred, average="macro")), 6),
     }
     return metrics, elapsed, peak
+
+
+# Classical baseline runner
+
+def _run_baseline(
+    baseline_cfg: dict,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    seed: int,
+    n_components_auto: int,
+) -> dict:
+    """
+    Run one classical baseline entry from the config ``baselines`` list.
+
+    A baseline may optionally include a ``feature_map`` block (for RFF,
+    polynomial features, or PCA) followed by a ``model`` block, or just a
+    ``model`` block applied directly to raw features.
+
+    The ``n_components_auto`` value is the mean output dimensionality of all
+    QIE encodings for this run; it is used when a feature map specifies
+    ``n_components: auto``, providing the matched-budget dimension.
+
+    An optional ``max_samples`` key in the baseline block subsamples the
+    training data before the model fit step, which is required for SVM on
+    datasets with hundreds of thousands of rows.
+
+    Returns
+    -------
+    dict with keys: name, feature_map, feature_map_params, model,
+    model_params, input_dim, feature_dim, subsampled_train_n, metrics,
+    timing_seconds, memory_bytes.
+    """
+    baseline_name = baseline_cfg["name"]
+    feature_map_cfg = baseline_cfg.get("feature_map", None)
+    model_cfg = baseline_cfg["model"]
+
+    # ── Optional feature-map step ────────────────────────────────────────────
+    if feature_map_cfg is not None:
+        fm_name = feature_map_cfg["name"]
+        fm_params = {k: v for k, v in feature_map_cfg.items() if k != "name"}
+
+        if fm_name not in FEATURE_MAP_REGISTRY:
+            raise ValueError(
+                f"Unknown feature map '{fm_name}'. "
+                f"Available: {list(FEATURE_MAP_REGISTRY.keys())}"
+            )
+
+        # PCA: cap n_components so sklearn never receives an infeasible value.
+        auto = n_components_auto
+        if fm_name == "pca":
+            auto = min(n_components_auto,
+                       X_train.shape[1] - 1,
+                       X_train.shape[0] - 1)
+
+        feature_map = FEATURE_MAP_REGISTRY[fm_name](
+            fm_params, auto, seed, n_features=int(X_train.shape[1])
+        )
+
+        tracemalloc.start()
+        t0 = time.perf_counter()
+        feature_map.fit(X_train)
+        X_train_mapped = feature_map.transform(X_train)
+        X_test_mapped = feature_map.transform(X_test)
+        fm_elapsed = time.perf_counter() - t0
+        _, fm_peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        feature_dim = int(X_train_mapped.shape[1])
+    else:
+        X_train_mapped, X_test_mapped = X_train, X_test
+        fm_elapsed, fm_peak = 0.0, 0
+        feature_dim = int(X_train.shape[1])
+        fm_name = None
+        fm_params = {}
+
+    # ── Optional subsampling (required for SVM on large datasets) ────────────
+    max_samples = baseline_cfg.get("max_samples", None)
+    X_tr, y_tr = X_train_mapped, y_train
+    subsampled_n = None
+    if max_samples is not None and len(X_tr) > int(max_samples):
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(len(X_tr), size=int(max_samples), replace=False)
+        idx.sort()
+        X_tr, y_tr = X_tr[idx], y_tr[idx]
+        subsampled_n = int(max_samples)
+
+    # ── Model step ───────────────────────────────────────────────────────────
+
+    # Special case: torch_mlp uses the PyTorch training path instead of
+    # sklearn.  It handles its own scaling, subsampling, and curve logging.
+    if model_cfg["name"] == "torch_mlp":
+        from qie_research.models.torch_trainer import train_mlp
+        torch_params = {k: v for k, v in model_cfg.items() if k != "name"}
+        # Honour max_samples from the baseline block (already computed above).
+        if subsampled_n is not None:
+            torch_params.setdefault("max_samples", subsampled_n)
+        result = train_mlp(
+            X_train, y_train, X_test, y_test,
+            seed=seed,
+            hidden_layer_sizes=torch_params.pop("hidden_layer_sizes", [256, 128]),
+            n_epochs=int(torch_params.pop("epochs", 100)),
+            lr=float(torch_params.pop("lr", 1e-3)),
+            weight_decay=float(torch_params.pop("weight_decay", 1e-4)),
+            batch_size=int(torch_params.pop("batch_size", 256)),
+            max_samples=torch_params.pop("max_samples", None),
+        )
+        return {
+            "name": baseline_name,
+            "feature_map": None,
+            "feature_map_params": None,
+            "model": "torch_mlp",
+            "model_params": {k: v for k, v in model_cfg.items() if k != "name"},
+            "input_dim": int(X_train.shape[1]),
+            "feature_dim": int(X_train.shape[1]),
+            "subsampled_train_n": result.pop("subsampled_train_n", None),
+            **result,
+        }
+
+    if model_cfg["name"] not in MODEL_REGISTRY:
+        raise ValueError(
+            f"Unknown model '{model_cfg['name']}'. "
+            f"Available: {list(MODEL_REGISTRY.keys())} or 'torch_mlp'"
+        )
+
+    model_params = {k: v for k, v in model_cfg.items() if k != "name"}
+    model_params["_seed"] = seed
+    model = MODEL_REGISTRY[model_cfg["name"]](model_params)
+
+    metrics, train_elapsed, train_peak = _train_and_evaluate(
+        model, X_tr, y_tr, X_test_mapped, y_test
+    )
+
+    return {
+        "name": baseline_name,
+        "feature_map": fm_name,
+        "feature_map_params": fm_params if fm_name else None,
+        "model": model_cfg["name"],
+        "model_params": {k: v for k, v in model_params.items() if k != "_seed"},
+        "input_dim": int(X_train.shape[1]),
+        "feature_dim": feature_dim,
+        "subsampled_train_n": subsampled_n,
+        "metrics": metrics,
+        "training_curves": None,
+        "timing_seconds": {
+            "feature_map": round(fm_elapsed, 6),
+            "training": round(train_elapsed, 6),
+            "total": round(fm_elapsed + train_elapsed, 6),
+        },
+        "memory_bytes": {
+            "feature_map_peak": fm_peak,
+            "training_peak": train_peak,
+        },
+    }
 
 
 # Main runner
@@ -233,10 +852,29 @@ def run(config_path: str | Path) -> dict:
         model_params["_seed"] = seed
         model = MODEL_REGISTRY[model_cfg["name"]](model_params)
 
-        # Train and evaluate
+        # Train and evaluate (sklearn linear head)
         metrics, train_time, train_mem = _train_and_evaluate(
             model, X_train_enc, y_train, X_test_enc, y_test
         )
+
+        # ── Optional PyTorch linear head ─────────────────────────────────────
+        # Activated when the config contains a top-level ``torch:`` block.
+        # Trains nn.Linear on the frozen encoded features and records
+        # per-epoch loss and gradient norm curves.
+        torch_cfg = cfg["run"].get("torch", None)
+        if torch_cfg is not None:
+            from qie_research.models.torch_trainer import train_linear_head
+            torch_result = train_linear_head(
+                X_train_enc, y_train, X_test_enc, y_test,
+                n_epochs=int(torch_cfg.get("epochs", 100)),
+                lr=float(torch_cfg.get("lr", 1e-3)),
+                weight_decay=float(torch_cfg.get("weight_decay", 1e-4)),
+                batch_size=int(torch_cfg.get("batch_size", 256)),
+                seed=seed,
+                encoding_name=enc_name,
+            )
+        else:
+            torch_result = None
 
         encoding_results.append({
             "encoding": enc_name,
@@ -253,7 +891,24 @@ def run(config_path: str | Path) -> dict:
                 "encoding_peak": enc_mem,
                 "training_peak": train_mem,
             },
+            "torch_linear_head": torch_result,
         })
+
+    # ── Classical baselines ──────────────────────────────────────────────────
+    # n_components_auto is the mean QIE output dimension for this run.
+    # Feature-map baselines that specify n_components: auto use this value so
+    # that their output space is matched to the average QIE encoding budget.
+    qie_d_outs = [r["output_dim"] for r in encoding_results]
+    n_components_auto = int(round(sum(qie_d_outs) / len(qie_d_outs)))
+
+    baseline_results = []
+    for bl_cfg in cfg.get("baselines", []):
+        bl_result = _run_baseline(
+            bl_cfg, X_train, y_train, X_test, y_test,
+            seed=seed,
+            n_components_auto=n_components_auto,
+        )
+        baseline_results.append(bl_result)
 
     # Assemble and write results
     output = {
@@ -265,6 +920,7 @@ def run(config_path: str | Path) -> dict:
         },
         "dataset": dataset_info,
         "results": encoding_results,
+        "baselines": baseline_results,
     }
 
     output_dir = Path(cfg["run"]["output_dir"])
@@ -293,8 +949,8 @@ def main() -> None:
 
     results = run(args.config)
 
-    print("\nSummary")
-    print("-" * 50)
+    print("\nQIE Encodings")
+    print("-" * 62)
     for r in results["results"]:
         print(
             f"  {r['encoding']:<12}"
@@ -304,6 +960,22 @@ def main() -> None:
             f"  train={r['timing_seconds']['training']:.4f}s"
             f"  d_out={r['output_dim']}"
         )
+
+    if results["baselines"]:
+        print("\nClassical Baselines")
+        print("-" * 62)
+        for b in results["baselines"]:
+            sub = f"  (subsample={b['subsampled_train_n']})" if b.get("subsampled_train_n") else ""
+            t = b["timing_seconds"]
+            total = t if isinstance(t, (int, float)) else t["total"]
+            print(
+                f"  {b['name']:<18}"
+                f"  accuracy={b['metrics']['accuracy']:.4f}"
+                f"  f1={b['metrics']['f1_macro']:.4f}"
+                f"  total={total:.4f}s"
+                f"  d_feat={b['feature_dim']}"
+                f"{sub}"
+            )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,278 @@
+{
+  "run": {
+    "name": "high_dim_parity",
+    "seed": 42,
+    "config_path": "configs/high_dim_parity.yaml",
+    "timestamp": "2026-04-15T20:24:39.417519+00:00"
+  },
+  "dataset": {
+    "name": "high_dim_parity",
+    "n_train": 8000,
+    "n_test": 2000,
+    "n_features": 20,
+    "n_classes": 2
+  },
+  "results": [
+    {
+      "encoding": "amplitude",
+      "encoding_params": {
+        "pad_to_power_of_two": true
+      },
+      "input_dim": 20,
+      "output_dim": 32,
+      "metrics": {
+        "accuracy": 0.499,
+        "f1_macro": 0.498578
+      },
+      "timing_seconds": {
+        "encoding": 0.006117,
+        "training": 0.013342,
+        "total": 0.019459
+      },
+      "memory_bytes": {
+        "encoding_peak": 4674328,
+        "training_peak": 312431
+      }
+    },
+    {
+      "encoding": "angle",
+      "encoding_params": {
+        "scale": 3.141592653589793,
+        "standardize": true
+      },
+      "input_dim": 20,
+      "output_dim": 40,
+      "metrics": {
+        "accuracy": 0.5005,
+        "f1_macro": 0.499905
+      },
+      "timing_seconds": {
+        "encoding": 0.029378,
+        "training": 0.014992,
+        "total": 0.04437
+      },
+      "memory_bytes": {
+        "encoding_peak": 8961925,
+        "training_peak": 302445
+      }
+    },
+    {
+      "encoding": "basis",
+      "encoding_params": {
+        "n_bits": 8
+      },
+      "input_dim": 20,
+      "output_dim": 160,
+      "metrics": {
+        "accuracy": 0.518,
+        "f1_macro": 0.517877
+      },
+      "timing_seconds": {
+        "encoding": 0.038514,
+        "training": 0.300562,
+        "total": 0.339076
+      },
+      "memory_bytes": {
+        "encoding_peak": 18562134,
+        "training_peak": 340536
+      }
+    }
+  ],
+  "baselines": [
+    {
+      "name": "raw_linear",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 20,
+      "feature_dim": 20,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.496,
+        "f1_macro": 0.495483
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 0.011548,
+        "total": 0.011548
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 296210
+      }
+    },
+    {
+      "name": "rff",
+      "feature_map": "rff",
+      "feature_map_params": {
+        "n_components": "auto",
+        "gamma": "auto"
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 20,
+      "feature_dim": 77,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.4945,
+        "f1_macro": 0.494145
+      },
+      "timing_seconds": {
+        "feature_map": 0.074464,
+        "training": 0.202856,
+        "total": 0.277319
+      },
+      "memory_bytes": {
+        "feature_map_peak": 6573746,
+        "training_peak": 312853
+      }
+    },
+    {
+      "name": "poly2",
+      "feature_map": "polynomial",
+      "feature_map_params": {
+        "degree": 2
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 20,
+      "feature_dim": 230,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.475,
+        "f1_macro": 0.474998
+      },
+      "timing_seconds": {
+        "feature_map": 0.30088,
+        "training": 0.028576,
+        "total": 0.329455
+      },
+      "memory_bytes": {
+        "feature_map_peak": 31366708,
+        "training_peak": 357680
+      }
+    },
+    {
+      "name": "poly3",
+      "feature_map": "polynomial",
+      "feature_map_params": {
+        "degree": 3
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 2000,
+        "C": 1.0
+      },
+      "input_dim": 20,
+      "feature_dim": 1770,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.5105,
+        "f1_macro": 0.51049
+      },
+      "timing_seconds": {
+        "feature_map": 1.131773,
+        "training": 2.235509,
+        "total": 3.367282
+      },
+      "memory_bytes": {
+        "feature_map_peak": 240954390,
+        "training_peak": 813949
+      }
+    },
+    {
+      "name": "pca",
+      "feature_map": "pca",
+      "feature_map_params": {
+        "n_components": "auto"
+      },
+      "model": "logistic_regression",
+      "model_params": {
+        "max_iter": 1000,
+        "C": 1.0
+      },
+      "input_dim": 20,
+      "feature_dim": 19,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.5015,
+        "f1_macro": 0.500835
+      },
+      "timing_seconds": {
+        "feature_map": 0.160359,
+        "training": 0.038281,
+        "total": 0.19864
+      },
+      "memory_bytes": {
+        "feature_map_peak": 1593108,
+        "training_peak": 294841
+      }
+    },
+    {
+      "name": "rbf_svm",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "rbf_svm",
+      "model_params": {
+        "C": 1.0,
+        "gamma": "scale"
+      },
+      "input_dim": 20,
+      "feature_dim": 20,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.4755,
+        "f1_macro": 0.475484
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 4.741484,
+        "total": 4.741484
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 2746768
+      }
+    },
+    {
+      "name": "mlp",
+      "feature_map": null,
+      "feature_map_params": null,
+      "model": "mlp",
+      "model_params": {
+        "hidden_layer_sizes": [
+          256,
+          128
+        ],
+        "max_iter": 500,
+        "alpha": 0.0001
+      },
+      "input_dim": 20,
+      "feature_dim": 20,
+      "subsampled_train_n": null,
+      "metrics": {
+        "accuracy": 0.468,
+        "f1_macro": 0.46719
+      },
+      "timing_seconds": {
+        "feature_map": 0.0,
+        "training": 8.652711,
+        "total": 8.652711
+      },
+      "memory_bytes": {
+        "feature_map_peak": 0,
+        "training_peak": 7968317
+      }
+    }
+  ]
+}

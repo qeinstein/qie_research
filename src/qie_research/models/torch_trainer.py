@@ -37,7 +37,10 @@ Each function returns a dict with the following keys:
     training_curves : dict
         epochs       : list[int]  — epoch indices 1..N
         train_loss   : list[float] — mean cross-entropy loss per epoch
-        grad_norm    : list[float] — L2 gradient norm per epoch
+        grad_norm    : list[float] — L2 gradient norm of the last mini-batch
+                       per epoch.  Reported per-batch (not averaged across
+                       batches) because the mean of per-batch norms is not a
+                       valid quantity for convergence analysis.
 
     gradients_through_encoding : bool
         False for Mode A (linear head only).
@@ -51,9 +54,11 @@ Each function returns a dict with the following keys:
         Wall-clock time for the full training run.
 
     memory_bytes : int
-        Peak RAM (not VRAM) allocated during training, measured via
-        tracemalloc.  On GPU runs this captures host-side allocation only;
-        device memory is not tracked.
+        Peak memory allocated during training.  On CUDA, measured via
+        torch.cuda.max_memory_allocated() (device memory only; host-side
+        allocation not tracked).  On CPU, measured via tracemalloc (Python
+        heap only; PyTorch tensor storage allocated via the C++ allocator is
+        not captured, so this number is a lower bound on true RSS growth).
 """
 
 from __future__ import annotations
@@ -78,14 +83,8 @@ except ImportError:
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.preprocessing import StandardScaler
 
-
-# ─── Device selection ────────────────────────────────────────────────────────
-
 def _device() -> torch.device:
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-# ─── Gradient norm ───────────────────────────────────────────────────────────
 
 def _grad_norm(model: nn.Module) -> float:
     """
@@ -104,8 +103,36 @@ def _grad_norm(model: nn.Module) -> float:
             total_sq += p.grad.detach().float().norm(2).item() ** 2
     return float(total_sq ** 0.5)
 
+class _MemoryTracker:
+    """
+    Context manager that measures peak memory allocated during a training block.
 
-# ─── Mode A: QIE encoding + linear head ─────────────────────────────────────
+    On CUDA: uses torch.cuda.max_memory_allocated() (device memory).
+    On CPU: uses tracemalloc (Python heap only; PyTorch C++ tensor storage
+    is not captured, so the reported value is a lower bound).
+    """
+
+    def __init__(self, device: torch.device) -> None:
+        self._device = device
+        self._peak: int = 0
+
+    def __enter__(self) -> "_MemoryTracker":
+        if self._device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(self._device)
+        else:
+            tracemalloc.start()
+        return self
+
+    def __exit__(self, *_) -> None:
+        if self._device.type == "cuda":
+            self._peak = torch.cuda.max_memory_allocated(self._device)
+        else:
+            _, self._peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+
+    @property
+    def peak_bytes(self) -> int:
+        return self._peak
 
 def train_linear_head(
     X_train_enc: np.ndarray,
@@ -158,6 +185,7 @@ def train_linear_head(
     n_classes = int(len(np.unique(y_train)))
     d_in = int(X_train_enc.shape[1])
 
+    # Cast to float32; basis encoding output is uint8.
     X_tr = torch.from_numpy(X_train_enc.astype(np.float32)).to(device)
     y_tr = torch.from_numpy(y_train.astype(np.int64)).to(device)
     X_te = torch.from_numpy(X_test_enc.astype(np.float32)).to(device)
@@ -170,36 +198,35 @@ def train_linear_head(
     train_losses: list[float] = []
     grad_norms: list[float] = []
 
-    tracemalloc.start()
     t0 = time.perf_counter()
+    with _MemoryTracker(device) as mem:
+        model.train()
+        for _ in range(n_epochs):
+            perm = torch.randperm(len(X_tr), device=device)
+            epoch_loss = 0.0
+            last_gn = 0.0
+            n_batches = 0
 
-    model.train()
-    for _ in range(n_epochs):
-        perm = torch.randperm(len(X_tr), device=device)
-        epoch_loss = 0.0
-        epoch_grad_norm = 0.0
-        n_batches = 0
+            for i in range(0, len(X_tr), batch_size):
+                idx = perm[i : i + batch_size]
+                xb, yb = X_tr[idx], y_tr[idx]
 
-        for i in range(0, len(X_tr), batch_size):
-            idx = perm[i : i + batch_size]
-            xb, yb = X_tr[idx], y_tr[idx]
+                optimizer.zero_grad()
+                loss = criterion(model(xb), yb)
+                loss.backward()
+                last_gn = _grad_norm(model)
+                optimizer.step()
 
-            optimizer.zero_grad()
-            loss = criterion(model(xb), yb)
-            loss.backward()
-            gn = _grad_norm(model)
-            optimizer.step()
+                epoch_loss += loss.item()
+                n_batches += 1
 
-            epoch_loss += loss.item()
-            epoch_grad_norm += gn
-            n_batches += 1
-
-        train_losses.append(round(epoch_loss / n_batches, 6))
-        grad_norms.append(round(epoch_grad_norm / n_batches, 6))
+            train_losses.append(round(epoch_loss / n_batches, 6))
+            # Report the last batch's gradient norm per epoch.
+            # Averaging norms across batches is not a meaningful quantity
+            # for convergence analysis (mean(‖∇Lᵢ‖) ≠ ‖mean(∇Lᵢ)‖).
+            grad_norms.append(round(last_gn, 6))
 
     elapsed = time.perf_counter() - t0
-    _, peak_mem = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
 
     model.eval()
     with torch.no_grad():
@@ -234,11 +261,8 @@ def train_linear_head(
         "gradients_through_encoding": False,
         "encoding_note": note,
         "timing_seconds": round(elapsed, 6),
-        "memory_bytes": peak_mem,
+        "memory_bytes": mem.peak_bytes,
     }
-
-
-# ─── Mode B: end-to-end MLP ──────────────────────────────────────────────────
 
 def train_mlp(
     X_train: np.ndarray,
@@ -330,36 +354,32 @@ def train_mlp(
     train_losses: list[float] = []
     grad_norms: list[float] = []
 
-    tracemalloc.start()
     t0 = time.perf_counter()
+    with _MemoryTracker(device) as mem:
+        model.train()
+        for _ in range(n_epochs):
+            perm = torch.randperm(len(X_tr), device=device)
+            epoch_loss = 0.0
+            last_gn = 0.0
+            n_batches = 0
 
-    model.train()
-    for _ in range(n_epochs):
-        perm = torch.randperm(len(X_tr), device=device)
-        epoch_loss = 0.0
-        epoch_grad_norm = 0.0
-        n_batches = 0
+            for i in range(0, len(X_tr), batch_size):
+                idx = perm[i : i + batch_size]
+                xb, yb = X_tr[idx], y_tr[idx]
 
-        for i in range(0, len(X_tr), batch_size):
-            idx = perm[i : i + batch_size]
-            xb, yb = X_tr[idx], y_tr[idx]
+                optimizer.zero_grad()
+                loss = criterion(model(xb), yb)
+                loss.backward()
+                last_gn = _grad_norm(model)
+                optimizer.step()
 
-            optimizer.zero_grad()
-            loss = criterion(model(xb), yb)
-            loss.backward()
-            gn = _grad_norm(model)
-            optimizer.step()
+                epoch_loss += loss.item()
+                n_batches += 1
 
-            epoch_loss += loss.item()
-            epoch_grad_norm += gn
-            n_batches += 1
-
-        train_losses.append(round(epoch_loss / n_batches, 6))
-        grad_norms.append(round(epoch_grad_norm / n_batches, 6))
+            train_losses.append(round(epoch_loss / n_batches, 6))
+            grad_norms.append(round(last_gn, 6))
 
     elapsed = time.perf_counter() - t0
-    _, peak_mem = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
 
     model.eval()
     with torch.no_grad():
@@ -381,7 +401,7 @@ def train_mlp(
         "gradients_through_encoding": True,
         "encoding_note": None,
         "timing_seconds": round(elapsed, 6),
-        "memory_bytes": peak_mem,
+        "memory_bytes": mem.peak_bytes,
     }
     if subsampled_n is not None:
         result["subsampled_train_n"] = subsampled_n

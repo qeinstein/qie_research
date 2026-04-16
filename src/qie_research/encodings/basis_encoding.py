@@ -32,10 +32,20 @@ quantisation step has zero gradient almost everywhere.  NTK analysis and
 gradient-norm tracking do not apply to basis encoding.  This is a known
 structural limitation and is reported as part of the benchmark findings.
 
+Output dtype
+------------
+transform() returns uint8.  This uses 1 byte per bit rather than 8 bytes
+(float64), which is critical for large datasets: CIFAR-10 at n_bits=8
+would be ~11.8 GB as float64 vs ~1.5 GB as uint8.  Downstream consumers
+(PyTorch trainers, sklearn) must cast to float32/float64 as needed.
+
 Out-of-range handling
 ---------------------
 Test samples outside [minᵢ, maxᵢ] are clipped before quantisation.
 This prevents invalid bit patterns and is the only numerically safe option.
+Note: clipping also suppresses perturbation magnitude in noise-stability
+measurements — out-of-range noise is absorbed rather than reflected in the
+encoded output.
 """
 
 from __future__ import annotations
@@ -121,9 +131,10 @@ class BasisEncoding:
 
         Returns
         -------
-        X_enc : np.ndarray of shape (n_samples, d * n_bits), dtype float64
+        X_enc : np.ndarray of shape (n_samples, d * n_bits), dtype uint8
             Each block of n_bits columns is the binary representation of
             the corresponding discretised feature, MSB first.
+            Cast to float32 before passing to PyTorch or sklearn if needed.
         """
         self._check_is_fitted()
         X = _as_2d(X).astype(float)
@@ -138,12 +149,10 @@ class BasisEncoding:
 
         # Unpack to binary bits: (n_samples, d, n_bits), MSB first
         bit_positions = np.arange(self.n_bits - 1, -1, -1, dtype=np.int32)
-        bits = ((X_int[:, :, np.newaxis] >> bit_positions) & 1).astype(float)
+        bits = ((X_int[:, :, np.newaxis] >> bit_positions) & 1).astype(np.uint8)
 
         # Flatten to (n_samples, d * n_bits)
-        X_enc = bits.reshape(n_samples, -1)
-
-        return X_enc
+        return bits.reshape(n_samples, -1)
 
     def fit_transform(
         self, X: np.ndarray, y: np.ndarray | None = None
@@ -180,13 +189,9 @@ class BasisEncoding:
         self._check_is_fitted()
         n_samples = X_enc.shape[0]
         bits = X_enc.reshape(n_samples, self.input_dim_, self.n_bits).astype(np.int32)
-        bit_positions = np.arange(self.n_bits - 1, -1, -1, dtype=np.int32)
-        X_int = np.sum(bits * bit_positions[::-1].reshape(1, 1, -1), axis=2)
-
-        # Reconstruct using: bit_positions are already MSB-first powers of 2
+        # Powers of 2 in MSB-first order: [2^(n-1), 2^(n-2), ..., 2^0]
         powers = (2 ** np.arange(self.n_bits - 1, -1, -1)).reshape(1, 1, -1)
-        X_int = np.sum(bits * powers, axis=2)
-        return X_int
+        return np.sum(bits * powers, axis=2)
 
     # Internal helpers
 

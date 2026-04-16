@@ -3,7 +3,7 @@
     "name": "smoke_test_wine",
     "seed": 42,
     "config_path": "configs/smoke_test.yaml",
-    "timestamp": "2026-04-15T21:42:13.138309+00:00"
+    "timestamp": "2026-04-16T08:22:21.081333+00:00"
   },
   "dataset": {
     "name": "wine",
@@ -25,13 +25,13 @@
         "f1_macro": 0.536364
       },
       "timing_seconds": {
-        "encoding": 0.001314,
-        "training": 0.092747,
-        "total": 0.094061
+        "encoding": 0.000829,
+        "training": 0.024453,
+        "total": 0.025282
       },
       "memory_bytes": {
         "encoding_peak": 51144,
-        "training_peak": 53290
+        "training_peak": 53506
       },
       "torch_linear_head": null
     },
@@ -44,17 +44,17 @@
       "input_dim": 13,
       "output_dim": 26,
       "metrics": {
-        "accuracy": 0.972222,
-        "f1_macro": 0.970962
+        "accuracy": 1.0,
+        "f1_macro": 1.0
       },
       "timing_seconds": {
-        "encoding": 0.000787,
-        "training": 0.100847,
-        "total": 0.101634
+        "encoding": 0.000398,
+        "training": 0.037697,
+        "total": 0.038095
       },
       "memory_bytes": {
         "encoding_peak": 104592,
-        "training_peak": 61901
+        "training_peak": 62559
       },
       "torch_linear_head": null
     },
@@ -70,13 +70,13 @@
         "f1_macro": 0.915147
       },
       "timing_seconds": {
-        "encoding": 0.000696,
-        "training": 0.087975,
-        "total": 0.088671
+        "encoding": 0.000482,
+        "training": 0.043044,
+        "total": 0.043526
       },
       "memory_bytes": {
-        "encoding_peak": 215640,
-        "training_peak": 140274
+        "encoding_peak": 164184,
+        "training_peak": 259701
       },
       "torch_linear_head": null
     }

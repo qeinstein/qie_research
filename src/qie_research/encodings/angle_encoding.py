@@ -10,8 +10,15 @@ Reading off the amplitudes gives the per-feature classical map:
 
     φ(xᵢ) = [cos(θᵢ / 2),  sin(θᵢ / 2)]
 
-where  θᵢ = scale · xᵢ,  with scale = π by default (assumes xᵢ ∈ [-1, 1]
-after standardisation).  The full map doubles the dimensionality:
+where  θᵢ = scale · xᵢ,  with scale = π by default.  To achieve full
+angular coverage (θᵢ ∈ [-π, π]) without aliasing, features must lie in
+[-1, 1] before multiplication.  When standardize=True, a min-max transform
+is applied per feature so that the training range maps exactly to [-1, 1].
+This guarantees θᵢ ∈ [-π, π] for in-distribution samples.  Z-score
+standardization is intentionally NOT used: it does not bound the output,
+so outliers silently alias to a different angle with no error.
+
+The full map doubles the dimensionality:
 
     φ(x) ∈ R^{2d},  interleaved as  [cos(θ₁/2), sin(θ₁/2), ..., cos(θ_d/2), sin(θ_d/2)]
 
@@ -46,12 +53,13 @@ class AngleEncoding:
     ----------
     scale : float, default math.pi
         Multiplier applied to each feature before the trigonometric map:
-        θᵢ = scale · xᵢ.  The default π assumes xᵢ ∈ [-1, 1] after
-        standardisation, giving θᵢ ∈ [-π, π] and full angular coverage.
+        θᵢ = scale · xᵢ.  The default π, combined with standardize=True
+        (which maps each feature to [-1, 1]), gives θᵢ ∈ [-π, π] and
+        full angular coverage with no aliasing.
     standardize : bool, default True
-        If True, each feature is standardised to zero mean and unit variance
-        during fit, and the same statistics are applied during transform.
-        Set to False only when the caller guarantees the input is already in
+        If True, each feature is min-max scaled to [-1, 1] during fit,
+        and the same statistics are applied during transform.  Set to
+        False only when the caller guarantees the input is already in
         [-1, 1].
 
     Attributes
@@ -60,13 +68,12 @@ class AngleEncoding:
         Feature dimensionality seen during ``fit``.
     output_dim_ : int
         Always 2 * input_dim_.
-    mean_ : np.ndarray of shape (input_dim_,)
-        Per-feature means from the training set (only set when
+    min_ : np.ndarray of shape (input_dim_,)
+        Per-feature minimum from the training set (only set when
         standardize=True).
-    std_ : np.ndarray of shape (input_dim_,)
-        Per-feature standard deviations from the training set (only set
-        when standardize=True).  A floor of 1e-8 is applied to prevent
-        division by zero for constant features.
+    range_ : np.ndarray of shape (input_dim_,)
+        Per-feature range (max - min) from the training set, floored at
+        1e-8 for constant features (only set when standardize=True).
     """
 
     def __init__(
@@ -79,15 +86,15 @@ class AngleEncoding:
 
         self.input_dim_: int | None = None
         self.output_dim_: int | None = None
-        self.mean_: np.ndarray | None = None
-        self.std_: np.ndarray | None = None
+        self.min_: np.ndarray | None = None
+        self.range_: np.ndarray | None = None
 
     # Scikit-learn compatible interface
 
     def fit(self, X: np.ndarray, y: np.ndarray | None = None) -> "AngleEncoding":
         """
         Record input dimensionality and, if standardize=True, compute
-        per-feature mean and standard deviation from X.
+        per-feature min and range from X.
 
         Parameters
         ----------
@@ -103,8 +110,9 @@ class AngleEncoding:
         self.output_dim_ = 2 * self.input_dim_
 
         if self.standardize:
-            self.mean_ = X.mean(axis=0)
-            self.std_ = np.maximum(X.std(axis=0), 1e-8)
+            self.min_ = X.min(axis=0)
+            # Floor prevents division by zero for constant features.
+            self.range_ = np.maximum(X.max(axis=0) - X.min(axis=0), 1e-8)
 
         return self
 
@@ -126,7 +134,10 @@ class AngleEncoding:
         X = _as_2d(X).astype(float)
 
         if self.standardize:
-            X = (X - self.mean_) / self.std_
+            # Min-max to [-1, 1]: maps training range to exactly [-1, 1].
+            # Out-of-distribution test values may exceed [-1, 1] and alias;
+            # this is unavoidable without clipping (which would lose rank).
+            X = 2.0 * (X - self.min_) / self.range_ - 1.0
 
         theta = self.scale * X                     # (n_samples, d)
         half_theta = theta / 2.0                   # Ry gate uses θ/2

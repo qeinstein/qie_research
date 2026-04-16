@@ -48,7 +48,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sklearn.datasets import fetch_openml, load_wine
+from sklearn.datasets import load_wine
 from sklearn.decomposition import PCA
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.linear_model import LogisticRegression
@@ -56,7 +56,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import LabelEncoder, PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.svm import SVC
 
 from qie_research.encodings import ENCODING_REGISTRY
@@ -66,7 +66,6 @@ from qie_research.encodings import ENCODING_REGISTRY
 def _load_wine(params: dict) -> tuple[np.ndarray, np.ndarray]:
     data = load_wine()
     return data.data, data.target
-
 
 def _load_fashion_mnist(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -102,13 +101,9 @@ def _load_fashion_mnist(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     max_samples = params.get("max_samples", None)
     if max_samples is not None:
-        rng = np.random.default_rng(params.get("seed", 42))
-        idx = rng.choice(len(X), size=int(max_samples), replace=False)
-        idx.sort()
-        X, y = X[idx], y[idx]
+        X, y = _stratified_subsample(X, y, int(max_samples), params.get("seed", 42))
 
     return X, y
-
 
 def _load_high_dim_parity(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -140,7 +135,6 @@ def _load_high_dim_parity(params: dict) -> tuple[np.ndarray, np.ndarray]:
     y = (parity > 0).astype(int)
 
     return X, y
-
 
 def _load_high_rank_noise(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -183,7 +177,6 @@ def _load_high_rank_noise(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     return X, y
 
-
 def _load_breast_cancer(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
     UCI Breast Cancer Wisconsin dataset.
@@ -194,7 +187,6 @@ def _load_breast_cancer(params: dict) -> tuple[np.ndarray, np.ndarray]:
     from sklearn.datasets import load_breast_cancer
     data = load_breast_cancer()
     return data.data, data.target
-
 
 def _load_dry_bean(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -226,13 +218,9 @@ def _load_dry_bean(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     max_samples = params.get("max_samples", None)
     if max_samples is not None:
-        rng = np.random.default_rng(params.get("seed", 42))
-        idx = rng.choice(len(X), size=int(max_samples), replace=False)
-        idx.sort()
-        X, y = X[idx], y[idx]
+        X, y = _stratified_subsample(X, y, int(max_samples), params.get("seed", 42))
 
     return X, y
-
 
 def _load_credit_card_fraud(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -267,13 +255,9 @@ def _load_credit_card_fraud(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     max_samples = params.get("max_samples", None)
     if max_samples is not None:
-        rng = np.random.default_rng(params.get("seed", 42))
-        idx = rng.choice(len(X), size=int(max_samples), replace=False)
-        idx.sort()
-        X, y = X[idx], y[idx]
+        X, y = _stratified_subsample(X, y, int(max_samples), params.get("seed", 42))
 
     return X, y
-
 
 def _load_cifar10(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -306,19 +290,16 @@ def _load_cifar10(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     max_samples = params.get("max_samples", None)
     if max_samples is not None:
-        rng = np.random.default_rng(params.get("seed", 42))
-        idx = rng.choice(len(X), size=int(max_samples), replace=False)
-        idx.sort()
-        X, y = X[idx], y[idx]
+        X, y = _stratified_subsample(X, y, int(max_samples), params.get("seed", 42))
 
     return X, y
-
 
 def _load_higgs(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
     HIGGS dataset (500k subset).
 
-    500,000 samples, 21 features, binary classification.
+    500,000 samples, 28 features (21 low-level + 7 high-level derived),
+    binary classification.
     Canonical large-scale benchmark in the quantum ML literature.
     Loaded from numpy cache.  Cache must be generated once using:
 
@@ -348,13 +329,9 @@ def _load_higgs(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     max_samples = params.get("max_samples", 500_000)
     if max_samples is not None and int(max_samples) < len(X):
-        rng = np.random.default_rng(params.get("seed", 42))
-        idx = rng.choice(len(X), size=int(max_samples), replace=False)
-        idx.sort()
-        X, y = X[idx], y[idx]
+        X, y = _stratified_subsample(X, y, int(max_samples), params.get("seed", 42))
 
     return X, y
-
 
 def _load_covertype(params: dict) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -376,13 +353,9 @@ def _load_covertype(params: dict) -> tuple[np.ndarray, np.ndarray]:
 
     max_samples = params.get("max_samples", None)
     if max_samples is not None:
-        rng = np.random.default_rng(params.get("seed", 42))
-        idx = rng.choice(len(X), size=int(max_samples), replace=False)
-        idx.sort()
-        X, y = X[idx], y[idx]
+        X, y = _stratified_subsample(X, y, int(max_samples), params.get("seed", 42))
 
     return X, y
-
 
 DATASET_REGISTRY: dict[str, callable] = {
     "wine": _load_wine,
@@ -396,7 +369,6 @@ DATASET_REGISTRY: dict[str, callable] = {
     "high_dim_parity": _load_high_dim_parity,
     "high_rank_noise": _load_high_rank_noise,
 }
-
 
 # Feature-map registry (for classical baselines that use an explicit transform)
 
@@ -427,7 +399,6 @@ def _build_rff_map(params: dict, n_components_auto: int, seed: int,
         ("rff", RBFSampler(n_components=int(n), gamma=gamma, random_state=seed)),
     ])
 
-
 def _build_poly_map(params: dict, n_components_auto: int, seed: int,
                     n_features: int = 1):
     """
@@ -451,7 +422,6 @@ def _build_poly_map(params: dict, n_components_auto: int, seed: int,
         ("scaler", StandardScaler()),
     ])
 
-
 def _build_pca_map(params: dict, n_components_auto: int, seed: int,
                    n_features: int = 1):
     """
@@ -467,7 +437,6 @@ def _build_pca_map(params: dict, n_components_auto: int, seed: int,
         n = n_components_auto
     return PCA(n_components=int(n), random_state=seed)
 
-
 def _build_scaler_map(params: dict, n_components_auto: int, seed: int,
                       n_features: int = 1):
     """
@@ -479,14 +448,12 @@ def _build_scaler_map(params: dict, n_components_auto: int, seed: int,
     """
     return StandardScaler()
 
-
 FEATURE_MAP_REGISTRY: dict[str, callable] = {
     "scaler": _build_scaler_map,
     "rff": _build_rff_map,
     "polynomial": _build_poly_map,
     "pca": _build_pca_map,
 }
-
 
 # Model registry
 
@@ -496,7 +463,6 @@ def _build_logistic_regression(params: dict):
         C=params.get("C", 1.0),
         random_state=params.get("_seed"),  # injected by runner
     )
-
 
 def _build_rbf_svm(params: dict):
     """
@@ -513,7 +479,6 @@ def _build_rbf_svm(params: dict):
         ("svc", SVC(kernel="rbf", C=C, gamma=gamma,
                     random_state=params.get("_seed"))),
     ])
-
 
 def _build_mlp(params: dict):
     """
@@ -539,21 +504,56 @@ def _build_mlp(params: dict):
         )),
     ])
 
-
 MODEL_REGISTRY: dict[str, callable] = {
     "logistic_regression": _build_logistic_regression,
     "rbf_svm": _build_rbf_svm,
     "mlp": _build_mlp,
 }
 
-
 # Seed control
 
 def _set_seeds(seed: int) -> None:
     """Set all relevant random seeds before any data or model operations."""
     random.seed(seed)
-    np.random.seed(seed)
+    np.random.seed(seed)  # covers sklearn internals that use the legacy global state
+    try:
+        import torch
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+    except ImportError:
+        pass
 
+# Stratified subsampling helper
+
+def _stratified_subsample(
+    X: np.ndarray,
+    y: np.ndarray,
+    max_samples: int,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Return a stratified random subsample of (X, y) with exactly max_samples rows.
+
+    Stratification preserves class proportions, which is critical for
+    imbalanced datasets (e.g. credit_card_fraud with ~0.17% positive rate).
+    Falls back to simple random sampling if stratified splitting is infeasible
+    (e.g. a class has fewer than 2 samples).
+    """
+    if max_samples >= len(X):
+        return X, y
+    keep_frac = max_samples / len(X)
+    try:
+        _, X_sub, _, y_sub = train_test_split(
+            X, y, test_size=keep_frac, random_state=seed, stratify=y
+        )
+    except ValueError:
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(len(X), size=max_samples, replace=False)
+        X_sub, y_sub = X[idx], y[idx]
+    return X_sub, y_sub
 
 # Timed + memory-tracked encode step
 
@@ -581,7 +581,6 @@ def _encode(
     tracemalloc.stop()
 
     return X_train_enc, X_test_enc, elapsed, peak
-
 
 # Timed + memory-tracked train + evaluate step
 
@@ -614,7 +613,6 @@ def _train_and_evaluate(
         "f1_macro": round(float(f1_score(y_test, y_pred, average="macro")), 6),
     }
     return metrics, elapsed, peak
-
 
 # Classical baseline runner
 
@@ -652,7 +650,6 @@ def _run_baseline(
     feature_map_cfg = baseline_cfg.get("feature_map", None)
     model_cfg = baseline_cfg["model"]
 
-    # ── Optional feature-map step ────────────────────────────────────────────
     if feature_map_cfg is not None:
         fm_name = feature_map_cfg["name"]
         fm_params = {k: v for k, v in feature_map_cfg.items() if k != "name"}
@@ -691,7 +688,6 @@ def _run_baseline(
         fm_name = None
         fm_params = {}
 
-    # ── Optional subsampling (required for SVM on large datasets) ────────────
     max_samples = baseline_cfg.get("max_samples", None)
     X_tr, y_tr = X_train_mapped, y_train
     subsampled_n = None
@@ -702,8 +698,6 @@ def _run_baseline(
         X_tr, y_tr = X_tr[idx], y_tr[idx]
         subsampled_n = int(max_samples)
 
-    # ── Model step ───────────────────────────────────────────────────────────
-
     # Special case: torch_mlp uses the PyTorch training path instead of
     # sklearn.  It handles its own scaling, subsampling, and curve logging.
     if model_cfg["name"] == "torch_mlp":
@@ -712,8 +706,15 @@ def _run_baseline(
         # Honour max_samples from the baseline block (already computed above).
         if subsampled_n is not None:
             torch_params.setdefault("max_samples", subsampled_n)
+        # Pass mapped features (X_train_mapped) rather than raw X_train so that
+        # any configured feature_map is actually applied.  When no feature_map is
+        # configured, X_train_mapped is X_train (same object from the else branch
+        # above), so this is a no-op for the common case.
+        # Note: train_mlp applies StandardScaler internally.  If the feature_map
+        # pipeline already includes a scaler, the features will be scaled twice.
+        # Avoid pairing torch_mlp with a scaler-based feature_map in configs.
         result = train_mlp(
-            X_train, y_train, X_test, y_test,
+            X_train_mapped, y_train, X_test_mapped, y_test,
             seed=seed,
             hidden_layer_sizes=torch_params.pop("hidden_layer_sizes", [256, 128]),
             n_epochs=int(torch_params.pop("epochs", 100)),
@@ -769,7 +770,6 @@ def _run_baseline(
             "training_peak": train_peak,
         },
     }
-
 
 # Main runner
 
@@ -857,7 +857,6 @@ def run(config_path: str | Path) -> dict:
             model, X_train_enc, y_train, X_test_enc, y_test
         )
 
-        # ── Optional PyTorch linear head ─────────────────────────────────────
         # Activated when the config contains a top-level ``torch:`` block.
         # Trains nn.Linear on the frozen encoded features and records
         # per-epoch loss and gradient norm curves.
@@ -894,12 +893,14 @@ def run(config_path: str | Path) -> dict:
             "torch_linear_head": torch_result,
         })
 
-    # ── Classical baselines ──────────────────────────────────────────────────
-    # n_components_auto is the mean QIE output dimension for this run.
-    # Feature-map baselines that specify n_components: auto use this value so
-    # that their output space is matched to the average QIE encoding budget.
+    # n_components_auto is the median QIE output dimension for this run.
+    # Median is used rather than mean because basis encoding's output dimension
+    # (d * n_bits, e.g. 13*8=104 for wine) dominates an arithmetic mean and
+    # inflates the matched budget far beyond amplitude encoding's output (16),
+    # producing an unfair comparison for amplitude.  Median is more robust to
+    # this skew across the three encoding scales.
     qie_d_outs = [r["output_dim"] for r in encoding_results]
-    n_components_auto = int(round(sum(qie_d_outs) / len(qie_d_outs)))
+    n_components_auto = int(np.median(qie_d_outs))
 
     baseline_results = []
     for bl_cfg in cfg.get("baselines", []):
@@ -932,7 +933,6 @@ def run(config_path: str | Path) -> dict:
 
     print(f"Results written to {output_path}")
     return output
-
 
 # CLI entry point
 
@@ -976,7 +976,6 @@ def main() -> None:
                 f"  d_feat={b['feature_dim']}"
                 f"{sub}"
             )
-
 
 if __name__ == "__main__":
     main()

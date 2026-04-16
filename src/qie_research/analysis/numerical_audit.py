@@ -21,10 +21,16 @@ Effective rank:
     erank(X) = exp( -sum_i p_i * log(p_i) ),  p_i = sigma_i / sum_j sigma_j
 
 Condition number:
-    kappa = sigma_max / sigma_min   (over non-zero singular values)
+    kappa = sigma_max / sigma_min   (over numerically significant singular
+    values; threshold = eps * sigma_max * max(n, d) to exclude floating-point
+    noise from near-zero singular values of rank-deficient matrices)
 
 Noise stability:
     delta = ||phi(X + eps) - phi(X)||_F / n_samples,  eps ~ N(0, 0.01)
+
+    Caveat for BasisEncoding: out-of-range perturbations are clipped before
+    quantisation, so delta systematically underestimates the true sensitivity
+    for samples near the training range boundary.
 
 Usage
 -----
@@ -47,7 +53,11 @@ from qie_research.encodings import ENCODING_REGISTRY
 
 SEED = 42
 NOISE_STD = 0.01
-OUTPUT_PATH = Path("results/metrics/phase_2_numerical_audit.json")
+
+# Resolve OUTPUT_PATH relative to this file so the audit can be run from any
+# working directory without writing to the wrong location.
+_HERE = Path(__file__).resolve().parent
+OUTPUT_PATH = _HERE.parent.parent.parent / "results" / "metrics" / "phase_2_numerical_audit.json"
 
 ENCODING_CONFIGS: list[dict] = [
     {"name": "amplitude", "pad_to_power_of_two": True},
@@ -87,14 +97,23 @@ def _effective_rank(sigma: np.ndarray) -> float:
 
 def _condition_number(sigma: np.ndarray) -> float:
     """
-    Condition number: ratio of largest to smallest non-zero singular value.
+    Condition number: ratio of largest to smallest numerically significant
+    singular value.
 
         kappa = sigma_max / sigma_min
+
+    Singular values below  eps * sigma_max * max(shape)  are treated as
+    numerical zeros and excluded.  This avoids κ exploding to ~10¹⁶ for
+    rank-deficient matrices (e.g. binary basis-encoded outputs) where
+    floating-point arithmetic produces near-zero but nonzero singular values.
     """
-    sigma_nonzero = sigma[sigma > 0]
-    if len(sigma_nonzero) < 2:
+    if len(sigma) == 0 or sigma[0] == 0:
         return float("inf")
-    return float(sigma_nonzero[0] / sigma_nonzero[-1])
+    threshold = np.finfo(float).eps * sigma[0] * max(sigma.shape)
+    sigma_sig = sigma[sigma > threshold]
+    if len(sigma_sig) < 2:
+        return float("inf")
+    return float(sigma_sig[0] / sigma_sig[-1])
 
 
 # Noise stability
@@ -109,10 +128,14 @@ def _noise_stability(
     Mean per-sample Frobenius distance between clean and noisy encodings.
 
         delta = ||phi(X + eps) - phi(X)||_F / n_samples,  eps ~ N(0, noise_std)
+
+    For BasisEncoding, out-of-range perturbations are clipped before
+    quantisation, so delta underestimates true sensitivity near range
+    boundaries.  This is flagged in the audit output.
     """
     eps = rng.normal(loc=0.0, scale=noise_std, size=X.shape)
-    X_enc_clean = encoder.transform(X)
-    X_enc_noisy = encoder.transform(X + eps)
+    X_enc_clean = encoder.transform(X).astype(float)
+    X_enc_noisy = encoder.transform(X + eps).astype(float)
     diff = X_enc_clean - X_enc_noisy
     return float(np.linalg.norm(diff, "fro") / X.shape[0])
 
@@ -189,13 +212,21 @@ def run_audit() -> dict:
         # Invariant check
         invariant = _verify_invariants(enc_name, encoder, X_enc)
 
-        # Spectral diagnostics
-        sigma = _singular_values(X_enc)
+        # Spectral diagnostics (cast to float64 for SVD; basis output is uint8)
+        sigma = _singular_values(X_enc.astype(float))
         erank = _effective_rank(sigma)
         kappa = _condition_number(sigma)
 
         # Noise stability
         stability = _noise_stability(encoder, X_train, NOISE_STD, rng)
+
+        # Flag the known clipping artefact for basis encoding
+        stability_note = None
+        if enc_name == "basis":
+            stability_note = (
+                "Out-of-range perturbations are absorbed by min-max clipping "
+                "before quantisation; delta is a lower bound on true sensitivity."
+            )
 
         encoding_audits.append({
             "encoding": enc_name,
@@ -215,6 +246,7 @@ def run_audit() -> dict:
             "noise_stability": {
                 "noise_std": NOISE_STD,
                 "mean_frobenius_distance_per_sample": round(stability, 6),
+                "note": stability_note,
             },
         })
 

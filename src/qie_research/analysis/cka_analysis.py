@@ -52,9 +52,11 @@ def center_gram_matrix(K: np.ndarray) -> np.ndarray:
 
     Implementation Note
     -------------------
-    Direct matrix multiplication with H is O(n^3). This implementation uses 
-    broadcasted subtraction to achieve O(n^2) complexity, which is critical 
-    for large datasets like HIGGS or CIFAR-10.
+    Direct matrix multiplication with H is O(n^3). This implementation uses
+    broadcasted subtraction to achieve O(n^2) compute for centering.
+    Note that end-to-end linear CKA here still materializes full n x n Gram
+    matrices, so memory remains O(n^2) and is best suited to moderate sample
+    sizes or sampled subsets of very large datasets.
 
     Parameters
     ----------

@@ -37,9 +37,15 @@ Kornblith, S., et al. (2019). "Similarity of Neural Network Representations
 Revisited." ICML.
 """
 
-from __future__ import annotations
+import argparse
+from typing import Optional
 
 import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+
+from qie_research.encodings import ENCODING_REGISTRY
+from qie_research.runner import DATASET_REGISTRY
 
 
 def center_gram_matrix(K: np.ndarray) -> np.ndarray:
@@ -182,30 +188,82 @@ def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
 # -------------------------------------------------------------------------
 
 def main() -> None:
-    """Run a quick sanity check for CKA calculation."""
-    print("CKA Analysis Sanity Check")
+    parser = argparse.ArgumentParser(description="Run CKA similarity analysis.")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="wine",
+        help="Dataset name.",
+    )
+    parser.add_argument(
+        "--encoding",
+        type=str,
+        default="amplitude",
+        help="Encoding to test (amplitude, angle, basis).",
+    )
+    parser.add_argument(
+        "--compare-to",
+        type=str,
+        default="pca",
+        help="Classical representation to compare against (pca, raw).",
+    )
+    parser.add_argument(
+        "--n-samples",
+        type=int,
+        default=1000,
+        help="Number of samples to use (CKA is O(n^2) in memory).",
+    )
+    args = parser.parse_args()
+
+    # 1. Load data
+    print(f"Loading dataset: {args.dataset}...")
+    params = {}
+    if args.dataset == "high_rank_noise":
+        # Request double samples to allow a clean stratified split
+        params = {"n_features": 200, "noise_std": 2.0, "n_samples": args.n_samples * 2}
+    
+    if args.dataset not in DATASET_REGISTRY:
+        print(f"Error: Unknown dataset {args.dataset}")
+        return
+
+    X, y = DATASET_REGISTRY[args.dataset](params)
+    
+    if len(X) > args.n_samples:
+        X_train, _, _, _ = train_test_split(
+            X, y, train_size=args.n_samples, random_state=42, stratify=y
+        )
+    else:
+        X_train = X
+
+    # 2. Get Representations
+    print(f"Generating representations for {args.encoding} and {args.compare_to}...")
+    
+    # QIE Representation
+    encoder = ENCODING_REGISTRY[args.encoding]()
+    X_qie = encoder.fit_transform(X_train)
+
+    # Comparison Representation
+    if args.compare_to == "pca":
+        n_comp = min(X_qie.shape[1], X_train.shape[1])
+        print(f"  Fitting PCA with {n_comp} components...")
+        pca = PCA(n_components=n_comp)
+        X_comp = pca.fit_transform(X_train)
+    elif args.compare_to == "raw":
+        X_comp = X_train
+    else:
+        print(f"Error: Unknown comparison method {args.compare_to}")
+        return
+
+    # 3. Calculate CKA
+    print(f"Calculating CKA similarity on {args.n_samples} samples...")
+    score = calculate_cka(X_qie, X_comp)
+    
     print("-" * 30)
-
-    n_samples = 100
-    d1 = 10
-    d2 = 50
-
-    # Test 1: Identity Case (Should be 1.0)
-    X_id = np.random.randn(n_samples, d1)
-    score_id = calculate_cka(X_id, X_id)
-    print(f"Identity Test (X vs X): {score_id:.4f}")
-
-    # Test 2: Rotation Invariance (Should be 1.0)
-    # Generate an orthogonal matrix (Rotation)
-    Q, _ = np.linalg.qr(np.random.randn(d1, d1))
-    X_rot = X_id @ Q
-    score_rot = calculate_cka(X_id, X_rot)
-    print(f"Rotation Invariance Test (X vs rotated X): {score_rot:.4f}")
-
-    # Test 3: Completely Different Data (Should be low)
-    X_random = np.random.randn(n_samples, d2)
-    score_rand = calculate_cka(X_id, X_random)
-    print(f"Random Similarity Test (X vs noise): {score_rand:.4f}")
+    print(f"Dataset:    {args.dataset}")
+    print(f"QIE:        {args.encoding} (dim={X_qie.shape[1]})")
+    print(f"Classical:  {args.compare_to} (dim={X_comp.shape[1]})")
+    print(f"CKA Score:  {score:.4f}")
+    print("-" * 30)
 
 
 if __name__ == "__main__":

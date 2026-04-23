@@ -52,8 +52,8 @@ The central questions are:
     \item How stable is each encoding under small input perturbations?
 \end{enumerate}
 
-All results were produced from the UCI Wine dataset (142 training samples,
-13 features, 3 classes) using seed 42.  The audit script is located at
+All results were produced from the synthetic High-Rank Noise dataset (4,000 training samples,
+200 features, 2 classes, noise $\sigma=2.0$) using seed 42.  The audit script is located at
 \texttt{src/qie\_research/analysis/numerical\_audit.py} and the raw numbers
 are in \texttt{results/metrics/phase\_2\_numerical\_audit.json}.
 
@@ -79,8 +79,8 @@ Basis     & $b$-bit binary of each quantised $x_i$, concatenated & $d \cdot b$ &
 \caption{Summary of the three encodings and their classical feature maps.}
 \end{table}
 
-For $d = 13$ input features (UCI Wine) and $b = 8$ bits, the output
-dimensions are 16, 26, and 104 respectively.
+For $d = 200$ input features (High-Rank Noise) and $b = 8$ bits, the output
+dimensions are 256, 400, and 1600 respectively.
 
 % -------------------------------------------------------------------------
 \section{Formulae}
@@ -135,7 +135,7 @@ All noise stability results in this report use $\sigma = 0.01$.
 % -------------------------------------------------------------------------
 
 Each encoding has a structural invariant that must hold for every encoded
-sample.  These were verified on all 142 training samples.
+sample.  These were verified on all 4,000 training samples.
 
 \begin{table}[h]
 \centering
@@ -148,7 +148,7 @@ Angle     & $\cos^2(\theta_i/2) + \sin^2(\theta_i/2) = 1\ \forall\, i$ & \textco
 Basis     & All values $\in \{0, 1\}$ & \textcolor{green!60!black}{PASS} \\
 \bottomrule
 \end{tabular}
-\caption{Structural invariant verification across all 142 training samples.}
+\caption{Structural invariant verification across all 4,000 training samples.}
 \end{table}
 
 All three encodings satisfy their structural invariants on real data.
@@ -169,28 +169,24 @@ many directions or concentrates it in a few.
 \toprule
 \textbf{Rank} & \textbf{Singular value} \\
 \midrule
-1  & 11.898767 \\
-2  & 0.639309  \\
-3  & 0.082043  \\
-4  & 0.046871  \\
-5  & 0.026894  \\
-6  & 0.023239  \\
-7  & 0.017234  \\
-8  & 0.007243  \\
-9  & 0.006279  \\
-10 & 0.005238  \\
+1  & 6.654946 \\
+2  & 5.477316 \\
+3  & 5.471030 \\
+4  & 5.425838 \\
+5  & 5.394394 \\
+6  & 5.360665 \\
+7  & 5.329815 \\
+8  & 5.310096 \\
+9  & 5.293403 \\
+10 & 5.286656 \\
 \bottomrule
 \end{tabular}
-\caption{Top-10 singular values for amplitude encoding ($d_\mathrm{out} = 16$).}
+\caption{Top-10 singular values for amplitude encoding ($d_\mathrm{out} = 256$).}
 \end{table}
 
-The spectrum is strongly dominated by the first singular value
-($\sigma_1 = 11.90$), with a steep drop to $\sigma_2 = 0.64$.  This
-indicates that the amplitude-encoded feature matrix is nearly rank-1 ---
-almost all variance is concentrated in a single direction.  This is a
-direct consequence of L2 normalisation: after normalisation, all samples
-lie on the unit hypersphere, and the principal direction captures the
-dominant orientation of that cloud.
+The spectrum is flat, indicating that the high-rank noise dominates the 
+representation. Unlike the UCI Wine audit, energy is distributed across 
+many directions rather than concentrated in a single orientation.
 
 \subsection{Angle Encoding}
 
@@ -200,24 +196,24 @@ dominant orientation of that cloud.
 \toprule
 \textbf{Rank} & \textbf{Singular value} \\
 \midrule
-1  & 20.001993 \\
-2  & 16.531633 \\
-3  & 12.522490 \\
-4  & 9.731345  \\
-5  & 9.355629  \\
-6  & 9.072004  \\
-7  & 8.786925  \\
-8  & 8.138566  \\
-9  & 8.023533  \\
-10 & 7.630548  \\
+1  & 814.673633 \\
+2  & 35.601217  \\
+3  & 31.318439  \\
+4  & 31.200474  \\
+5  & 30.946581  \\
+6  & 30.616796  \\
+7  & 30.540299  \\
+8  & 30.294717  \\
+9  & 30.267674  \\
+10 & 30.182955  \\
 \bottomrule
 \end{tabular}
-\caption{Top-10 singular values for angle encoding ($d_\mathrm{out} = 26$).}
+\caption{Top-10 singular values for angle encoding ($d_\mathrm{out} = 400$).}
 \end{table}
 
-The spectrum decays gradually with no dominant spike, indicating that the
-angle encoding distributes energy broadly across many directions.  The
-smallest singular value is 2.65, giving a well-conditioned matrix.
+Angle encoding exhibits a large first singular value, potentially reflecting
+the mean orientation of the trigonometric maps, followed by a flat noisy 
+spectrum.
 
 \subsection{Basis Encoding}
 
@@ -227,25 +223,23 @@ smallest singular value is 2.65, giving a well-conditioned matrix.
 \toprule
 \textbf{Rank} & \textbf{Singular value} \\
 \midrule
-1  & 59.763547 \\
-2  & 13.209988 \\
-3  & 11.430762 \\
-4  & 10.954934 \\
-5  & 10.793405 \\
-6  & 10.290472 \\
-7  & 9.907706  \\
-8  & 9.418556  \\
-9  & 9.333274  \\
-10 & 9.260879  \\
+1  & 1270.602496 \\
+2  & 59.678419   \\
+3  & 59.232563   \\
+4  & 59.092432   \\
+5  & 58.794905   \\
+6  & 58.726485   \\
+7  & 58.648622   \\
+8  & 58.350514   \\
+9  & 58.128419   \\
+10 & 58.075436   \\
 \bottomrule
 \end{tabular}
-\caption{Top-10 singular values for basis encoding ($d_\mathrm{out} = 104$).}
+\caption{Top-10 singular values for basis encoding ($d_\mathrm{out} = 1600$).}
 \end{table}
 
-Basis encoding has a large first singular value relative to the rest,
-reflecting the large constant offset introduced by the binary encoding of
-each feature.  Beyond the first component, the spectrum is relatively
-flat, contributing to a high effective rank.
+Basis encoding shows a very high absolute dimensionality and a spectrum 
+dominated by the constant bit-offset, with a high-rank noise floor.
 
 % -------------------------------------------------------------------------
 \section{Effective Rank and Condition Number}
@@ -258,34 +252,27 @@ flat, contributing to a high effective rank.
 \textbf{Encoding} & \textbf{$d_\mathrm{out}$} & \textbf{erank} &
 \textbf{erank / $d_\mathrm{out}$} & \textbf{$\kappa$} \\
 \midrule
-Amplitude & 16  & 1.3751  & 0.086 & 6650.85 \\
-Angle     & 26  & 23.2806 & 0.896 & 7.55    \\
-Basis     & 104 & 77.0907 & 0.741 & 108.73  \\
+Amplitude & 256  & 198.63  & 0.776 & 1.92   \\
+Angle     & 400  & 250.09  & 0.625 & 163.90 \\
+Basis     & 1600 & 1340.94 & 0.838 & 231.68 \\
 \bottomrule
 \end{tabular}
 \caption{Effective rank, relative effective rank, and condition number for
-each encoding on the UCI Wine training split.}
+each encoding on the High-Rank Noise training split.}
 \end{table}
 
-The results reveal a large spread in representational geometry:
+The results on this stress-test dataset reveal:
 
 \begin{itemize}
-    \item \textbf{Amplitude encoding} has an effective rank of 1.38 out of
-    a possible 16, meaning it effectively uses only about 1.4 of its 16
-    output dimensions.  The condition number of 6650.85 is very high,
-    indicating severe numerical ill-conditioning.  This is consistent with
-    the near-rank-1 singular value spectrum observed above and is a
-    direct consequence of L2 normalisation collapsing the feature space.
+    \item \textbf{Amplitude encoding} actually shows high effective rank 
+    ($\mathrm{erank}=198.6$) and excellent conditioning ($\kappa=1.92$). 
+    This is because the isotropic noise in high dimension fills all 
+    available directions, preventing the rank-1 collapse seen in UCI Wine.
 
-    \item \textbf{Angle encoding} has an effective rank of 23.28 out of 26,
-    a relative utilisation of 89.6\%.  The condition number of 7.55 is low,
-    indicating a well-conditioned feature matrix.  Angle encoding makes
-    near-full use of its output dimensions.
-
-    \item \textbf{Basis encoding} has an effective rank of 77.09 out of 104,
-    a relative utilisation of 74.1\%.  The condition number of 108.73 is
-    moderate.  The large output dimensionality contributes to a high absolute
-    effective rank, though relative utilisation is lower than angle encoding.
+    \item \textbf{Angle encoding} and \textbf{Basis encoding} both maintain
+    high effective rank, reflecting their ability to capture high-dimensional
+    structure, though their condition numbers are higher than amplitude's 
+    due to the large first singular value (the constant component).
 \end{itemize}
 
 % -------------------------------------------------------------------------
@@ -299,9 +286,9 @@ The results reveal a large spread in representational geometry:
 \textbf{Encoding} & \textbf{Noise $\sigma$} &
 \textbf{$\delta$ (mean Frobenius / sample)} & \textbf{Relative to $d_\mathrm{out}$} \\
 \midrule
-Amplitude & 0.01 & $5.0 \times 10^{-6}$ & $3.1 \times 10^{-7}$ \\
-Angle     & 0.01 & $1.4 \times 10^{-2}$ & $5.5 \times 10^{-4}$ \\
-Basis     & 0.01 & $2.9 \times 10^{-1}$ & $2.8 \times 10^{-3}$ \\
+Amplitude & 0.01 & $7.9 \times 10^{-5}$ & $3.1 \times 10^{-7}$ \\
+Angle     & 0.01 & $4.8 \times 10^{-4}$ & $1.2 \times 10^{-6}$ \\
+Basis     & 0.01 & $1.2 \times 10^{-1}$ & $7.4 \times 10^{-5}$ \\
 \bottomrule
 \end{tabular}
 \caption{Noise stability under $\varepsilon \sim \mathcal{N}(0,\, 0.01^2)$.
@@ -340,34 +327,31 @@ encodings (Equation~\ref{eq:noise}).}
 \textbf{Encoding} & \textbf{Invariant} & \textbf{erank} &
 \textbf{$\kappa$} & \textbf{Noise $\delta$} \\
 \midrule
-Amplitude & \textcolor{green!60!black}{PASS} & 1.38  & 6650.85 & $5.0 \times 10^{-6}$ \\
-Angle     & \textcolor{green!60!black}{PASS} & 23.28 & 7.55    & $1.4 \times 10^{-2}$ \\
-Basis     & \textcolor{green!60!black}{PASS} & 77.09 & 108.73  & $2.9 \times 10^{-1}$ \\
+Amplitude & \textcolor{green!60!black}{PASS} & 198.63  & 1.92   & $7.9 \times 10^{-5}$ \\
+Angle     & \textcolor{green!60!black}{PASS} & 250.09  & 163.90 & $4.8 \times 10^{-4}$ \\
+Basis     & \textcolor{green!60!black}{PASS} & 1340.94 & 231.68 & $1.2 \times 10^{-1}$ \\
 \bottomrule
 \end{tabular}
-\caption{Summary of Phase 2 numerical audit results.}
+\caption{Summary of Phase 2 numerical audit results on High-Rank Noise.}
 \end{table}
 
 All three encodings pass their structural invariant checks and are
-numerically well-defined on the UCI Wine dataset.  The audit surfaces
+numerically well-defined on the High-Rank Noise dataset.  The audit surfaces
 three properties that are directly relevant to the Phase~4 and Phase~5
 analyses:
 
 \begin{enumerate}
-    \item Amplitude encoding is nearly rank-1 and severely ill-conditioned.
-    Any downstream model operating on amplitude-encoded features is working
-    in a near-one-dimensional space.  This will need to be reconciled with
-    its Phase~4 performance results and explained through the conditioning
-    and NTK analyses in Phase~5.
+    \item Amplitude encoding is well-conditioned on this high-rank synthetic 
+    dataset, but we know from the Wine audit that it is highly sensitive to
+    global structure. This discrepancy must be highlighted in the Phase 5
+    attribution analysis.
 
-    \item Angle encoding has near-full effective rank utilisation and a low
-    condition number.  It is the most geometrically well-behaved encoding
-    of the three under these conditions.
+    \item Angle encoding and Basis encoding both preserve the high-rank
+    nature of the noise, though their condition numbers are affected by
+    large constant offsets.
 
-    \item Basis encoding is sensitive to noise due to the discontinuous
-    quantisation step.  This is a structural limitation that must be
-    reported alongside any Phase~4 performance results and must be
-    highlighted in the practical overhead discussion.
+    \item Basis encoding sensitivity to noise is confirmed across datasets,
+    emphasizing its structural limitation as a quantisation-based map.
 \end{enumerate}
 
 \textbf{Phase 3 (Dataset Freeze) may begin.}  No performance claims have

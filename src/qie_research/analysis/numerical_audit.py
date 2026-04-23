@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -273,7 +274,7 @@ def run_audit(dataset_name: str = "wine", dataset_params: dict | None = None) ->
 
 # CLI entry point
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run the Phase 2 Numerical Audit.")
     parser.add_argument(
         "--dataset",
@@ -293,7 +294,7 @@ def main() -> None:
         default=2.0,
         help="Noise std for high_rank_noise.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args([] if argv is None else argv)
 
     params = {}
     if args.dataset == "high_rank_noise":
@@ -321,4 +322,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

@@ -860,10 +860,12 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
             metrics, train_time, train_mem = _train_and_evaluate(
                 model, X_train_enc, y_train, X_test_enc, y_test
             )
+            sklearn_skipped = False
         else:
             # Skip sklearn training
-            metrics = {"accuracy": 0.0, "f1_macro": 0.0}
+            metrics = None
             train_time, train_mem = 0.0, 0
+            sklearn_skipped = True
 
         # Activated when the config contains a top-level ``torch:`` block.
         # Trains nn.Linear on the frozen encoded features and records
@@ -889,6 +891,7 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
             "input_dim": int(X_train.shape[1]),
             "output_dim": int(encoder.output_dim_),
             "metrics": metrics,
+            "sklearn_skipped": sklearn_skipped,
             "timing_seconds": {
                 "encoding": round(enc_time, 6),
                 "training": round(train_time, 6),
@@ -968,10 +971,26 @@ def main() -> None:
     print("\nQIE Encodings")
     print("-" * 62)
     for r in results["results"]:
+        metrics = r["metrics"]
+        metric_source = "sklearn"
+        if metrics is None and r["torch_linear_head"] is not None:
+            metrics = r["torch_linear_head"].get("metrics")
+            metric_source = "torch_linear_head"
+        elif metrics is None:
+            metric_source = "none"
+
+        if metrics is None:
+            acc_text = "n/a"
+            f1_text = "n/a"
+        else:
+            acc_text = f"{metrics['accuracy']:.4f}"
+            f1_text = f"{metrics['f1_macro']:.4f}"
+
         print(
             f"  {r['encoding']:<12}"
-            f"  accuracy={r['metrics']['accuracy']:.4f}"
-            f"  f1={r['metrics']['f1_macro']:.4f}"
+            f"  accuracy={acc_text}"
+            f"  f1={f1_text}"
+            f"  source={metric_source}"
             f"  enc={r['timing_seconds']['encoding']:.4f}s"
             f"  train={r['timing_seconds']['training']:.4f}s"
             f"  d_out={r['output_dim']}"

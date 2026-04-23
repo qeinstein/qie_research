@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -124,6 +122,22 @@ def test_run_torch_only_skips_non_torch_baselines(tmp_path):
     assert result["results"][0]["encoding"] == "amplitude"
 
 
+def test_run_torch_only_marks_sklearn_skipped(tmp_path):
+    cfg = {
+        "run": {"name": "torch_only_skip_sklearn", "seed": 0, "output_dir": str(tmp_path / "out")},
+        "dataset": {"name": "wine", "test_size": 0.2},
+        "encodings": [{"name": "amplitude"}],
+        "model": {"name": "logistic_regression", "max_iter": 100},
+    }
+    p = tmp_path / "torch_only_skip_sklearn.yaml"
+    p.write_text(yaml.dump(cfg))
+
+    result = run(p, torch_only=True)
+    enc_result = result["results"][0]
+    assert enc_result["metrics"] is None
+    assert enc_result["sklearn_skipped"] is True
+
+
 # runner main() CLI function (lines 940-978)
 
 def test_main_prints_results(tmp_path, capsys):
@@ -192,3 +206,29 @@ def test_main_prints_subsample(tmp_path, capsys):
 
     out = capsys.readouterr().out
     assert "subsample=50" in out
+
+
+def test_main_prefers_torch_metrics_when_sklearn_skipped(capsys):
+    fake_results = {
+        "results": [
+            {
+                "encoding": "amplitude",
+                "metrics": None,
+                "sklearn_skipped": True,
+                "timing_seconds": {"encoding": 0.1, "training": 0.2, "total": 0.3},
+                "output_dim": 16,
+                "torch_linear_head": {"metrics": {"accuracy": 0.9, "f1_macro": 0.8}},
+            }
+        ],
+        "baselines": [],
+    }
+    from qie_research.runner import main
+
+    with patch("qie_research.runner.run", return_value=fake_results):
+        with patch("sys.argv", ["runner", "configs/smoke_test.yaml", "--torch-only"]):
+            main()
+
+    out = capsys.readouterr().out
+    assert "accuracy=0.9000" in out
+    assert "f1=0.8000" in out
+    assert "source=torch_linear_head" in out

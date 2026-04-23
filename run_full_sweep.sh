@@ -5,17 +5,26 @@ set -euo pipefail
 # Usage: ./run_full_sweep.sh [--torch-only]
 
 TORCH_FLAG=""
+# Usage: ./run_full_sweep.sh [--torch-only] [--skip-install]
+
+TORCH_FLAG=""
+SKIP_INSTALL=0
+
 for arg in "$@"; do
-    if [ "$arg" = "--torch-only" ]; then
+    if [ "$arg" == "--torch-only" ]; then
         TORCH_FLAG="--torch-only"
         echo "Running in TORCH-ONLY mode (skipping sklearn training)."
-        break
+    elif [ "$arg" == "--skip-install" ]; then
+        SKIP_INSTALL=1
+        echo "Skipping dependency installation; expecting an activated Python environment."
     fi
 done
 
 # 1. Environment Setup
 echo "--- Step 1: Environment Setup ---"
-pip install -r requirements.txt
+if [ "$SKIP_INSTALL" -eq 0 ]; then
+    python3 -m pip install -r requirements.txt
+fi
 mkdir -p data/raw
 mkdir -p results/metrics
 

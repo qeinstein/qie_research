@@ -104,6 +104,26 @@ def test_run_with_torch_linear_head(tmp_path):
     assert "training_curves" in enc_result["torch_linear_head"]
 
 
+def test_run_torch_only_skips_non_torch_baselines(tmp_path):
+    cfg = {
+        "run": {"name": "torch_only_skip_baselines", "seed": 0, "output_dir": str(tmp_path / "out")},
+        "dataset": {"name": "wine", "test_size": 0.2},
+        "encodings": [{"name": "amplitude"}],
+        "model": {"name": "logistic_regression", "max_iter": 100},
+        "baselines": [
+            {"name": "raw_linear", "model": {"name": "logistic_regression", "max_iter": 100}},
+            {"name": "rbf_svm", "model": {"name": "rbf_svm", "C": 1.0}},
+        ],
+    }
+    p = tmp_path / "torch_only_skip_baselines.yaml"
+    p.write_text(yaml.dump(cfg))
+
+    result = run(p, torch_only=True)
+    assert result["baselines"] == []
+    assert len(result["results"]) == 1
+    assert result["results"][0]["encoding"] == "amplitude"
+
+
 # runner main() CLI function (lines 940-978)
 
 def test_main_prints_results(tmp_path, capsys):

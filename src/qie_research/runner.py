@@ -509,6 +509,7 @@ MODEL_REGISTRY: dict[str, callable] = {
     "rbf_svm": _build_rbf_svm,
     "mlp": _build_mlp,
 }
+TORCH_BASELINE_MODELS = {"torch_mlp"}
 
 # Seed control
 
@@ -911,7 +912,8 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
 
     baseline_results = []
     for bl_cfg in cfg.get("baselines", []):
-        if torch_only and bl_cfg.get("model", {}).get("name") == "rbf_svm":
+        model_name = bl_cfg.get("model", {}).get("name") or ""
+        if torch_only and model_name not in TORCH_BASELINE_MODELS:
             continue
         bl_result = _run_baseline(
             bl_cfg, X_train, y_train, X_test, y_test,

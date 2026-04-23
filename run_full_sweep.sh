@@ -1,13 +1,17 @@
 #!/bin/bash
+set -euo pipefail
 
 # QIE Research: Full Experimental Sweep Master Script
 # Usage: ./run_full_sweep.sh [--torch-only]
 
 TORCH_FLAG=""
-if [ "$1" == "--torch-only" ]; then
-    TORCH_FLAG="--torch-only"
-    echo "Running in TORCH-ONLY mode (skipping sklearn training)."
-fi
+for arg in "$@"; do
+    if [ "$arg" = "--torch-only" ]; then
+        TORCH_FLAG="--torch-only"
+        echo "Running in TORCH-ONLY mode (skipping sklearn training)."
+        break
+    fi
+done
 
 # 1. Environment Setup
 echo "--- Step 1: Environment Setup ---"

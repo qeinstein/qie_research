@@ -198,7 +198,7 @@ def run_audit(dataset_name: str = "wine", dataset_params: dict | None = None) ->
         "n_train": int(X_train.shape[0]),
         "n_test": int(X_test.shape[0]),
         "n_features": int(X_train.shape[1]),
-        "noise_std": NOISE_STD,
+        "perturbation_noise_std": NOISE_STD,
         "seed": SEED,
         "params": params,
     }

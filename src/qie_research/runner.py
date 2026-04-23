@@ -773,13 +773,15 @@ def _run_baseline(
 
 # Main runner
 
-def run(config_path: str | Path) -> dict:
+def run(config_path: str | Path, torch_only: bool = False) -> dict:
     """
     Execute a full benchmark run from a YAML config file.
 
     Parameters
     ----------
     config_path : str or Path
+    torch_only : bool
+        If True, skip sklearn training paths.
 
     Returns
     -------
@@ -846,16 +848,21 @@ def run(config_path: str | Path) -> dict:
             encoder, X_train, X_test
         )
 
-        # Build model, inject seed for reproducibility
-        model_cfg = cfg["model"]
-        model_params = {k: v for k, v in model_cfg.items() if k != "name"}
-        model_params["_seed"] = seed
-        model = MODEL_REGISTRY[model_cfg["name"]](model_params)
+        if not torch_only:
+            # Build model, inject seed for reproducibility
+            model_cfg = cfg["model"]
+            model_params = {k: v for k, v in model_cfg.items() if k != "name"}
+            model_params["_seed"] = seed
+            model = MODEL_REGISTRY[model_cfg["name"]](model_params)
 
-        # Train and evaluate (sklearn linear head)
-        metrics, train_time, train_mem = _train_and_evaluate(
-            model, X_train_enc, y_train, X_test_enc, y_test
-        )
+            # Train and evaluate (sklearn linear head)
+            metrics, train_time, train_mem = _train_and_evaluate(
+                model, X_train_enc, y_train, X_test_enc, y_test
+            )
+        else:
+            # Skip sklearn training
+            metrics = {"accuracy": 0.0, "f1_macro": 0.0}
+            train_time, train_mem = 0.0, 0
 
         # Activated when the config contains a top-level ``torch:`` block.
         # Trains nn.Linear on the frozen encoded features and records
@@ -904,6 +911,8 @@ def run(config_path: str | Path) -> dict:
 
     baseline_results = []
     for bl_cfg in cfg.get("baselines", []):
+        if torch_only and bl_cfg.get("model", {}).get("name") == "rbf_svm":
+            continue
         bl_result = _run_baseline(
             bl_cfg, X_train, y_train, X_test, y_test,
             seed=seed,
@@ -945,9 +954,14 @@ def main() -> None:
         type=str,
         help="Path to the YAML config file (e.g. configs/smoke_test.yaml).",
     )
+    parser.add_argument(
+        "--torch-only",
+        action="store_true",
+        help="Skip sklearn training paths and only run PyTorch differentiable paths.",
+    )
     args = parser.parse_args()
 
-    results = run(args.config)
+    results = run(args.config, torch_only=args.torch_only)
 
     print("\nQIE Encodings")
     print("-" * 62)

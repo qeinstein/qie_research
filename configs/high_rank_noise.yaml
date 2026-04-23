@@ -14,7 +14,7 @@ dataset:
   n_samples: 5000
   n_features: 200
   n_signal_components: 5
-  noise_std: 1.0
+  noise_std: 2.0
   seed: 42
 
 encodings:

@@ -2,12 +2,17 @@
   "phase": 2,
   "title": "Numerical Behavior Audit",
   "dataset": {
-    "name": "wine",
-    "n_train": 142,
-    "n_test": 36,
-    "n_features": 13,
+    "name": "high_rank_noise",
+    "n_train": 4000,
+    "n_test": 1000,
+    "n_features": 200,
     "noise_std": 0.01,
-    "seed": 42
+    "seed": 42,
+    "params": {
+      "n_features": 200,
+      "noise_std": 2.0,
+      "n_samples": 5000
+    }
   },
   "encodings": [
     {
@@ -15,35 +20,36 @@
       "encoding_params": {
         "pad_to_power_of_two": true
       },
-      "input_dim": 13,
-      "output_dim": 16,
-      "n_samples": 142,
+      "input_dim": 200,
+      "output_dim": 256,
+      "n_samples": 4000,
       "invariant_check": {
         "passed": true,
         "details": "sum_i x_i^2 == 1 for all rows"
       },
       "singular_values": {
         "top_10": [
-          11.898767,
-          0.639309,
-          0.082043,
-          0.046871,
-          0.026894,
-          0.023239,
-          0.017234,
-          0.007243,
-          0.006279,
-          0.005238
+          6.654946,
+          5.477316,
+          5.47103,
+          5.425838,
+          5.394394,
+          5.360665,
+          5.329815,
+          5.310096,
+          5.293403,
+          5.286656
         ],
-        "full_count": 16,
+        "full_count": 256,
         "min": 0.0,
-        "max": 11.898767
+        "max": 6.654946
       },
-      "effective_rank": 1.3751,
-      "condition_number": 6650.853,
+      "effective_rank": 198.6334,
+      "condition_number": 1.9233,
       "noise_stability": {
         "noise_std": 0.01,
-        "mean_frobenius_distance_per_sample": 5e-06
+        "mean_frobenius_distance_per_sample": 7.9e-05,
+        "note": null
       }
     },
     {
@@ -52,35 +58,36 @@
         "scale": 3.141592653589793,
         "standardize": true
       },
-      "input_dim": 13,
-      "output_dim": 26,
-      "n_samples": 142,
+      "input_dim": 200,
+      "output_dim": 400,
+      "n_samples": 4000,
       "invariant_check": {
         "passed": true,
         "details": "cos^2 + sin^2 == 1 for all pairs"
       },
       "singular_values": {
         "top_10": [
-          20.001993,
-          16.531633,
-          12.52249,
-          9.731345,
-          9.355629,
-          9.072004,
-          8.786925,
-          8.138566,
-          8.023533,
-          7.630548
+          814.673633,
+          35.601217,
+          31.318439,
+          31.200474,
+          30.946581,
+          30.616796,
+          30.540299,
+          30.294717,
+          30.267674,
+          30.182955
         ],
-        "full_count": 26,
-        "min": 2.649122,
-        "max": 20.001993
+        "full_count": 400,
+        "min": 4.970597,
+        "max": 814.673633
       },
-      "effective_rank": 23.2806,
-      "condition_number": 7.5504,
+      "effective_rank": 250.0911,
+      "condition_number": 163.8985,
       "noise_stability": {
         "noise_std": 0.01,
-        "mean_frobenius_distance_per_sample": 0.014372
+        "mean_frobenius_distance_per_sample": 0.000482,
+        "note": null
       }
     },
     {
@@ -88,35 +95,36 @@
       "encoding_params": {
         "n_bits": 8
       },
-      "input_dim": 13,
-      "output_dim": 104,
-      "n_samples": 142,
+      "input_dim": 200,
+      "output_dim": 1600,
+      "n_samples": 4000,
       "invariant_check": {
         "passed": true,
         "details": "all values in {0, 1}"
       },
       "singular_values": {
         "top_10": [
-          59.763547,
-          13.209988,
-          11.430762,
-          10.954934,
-          10.793405,
-          10.290472,
-          9.907706,
-          9.418556,
-          9.333274,
-          9.260879
+          1270.602496,
+          59.678419,
+          59.232563,
+          59.092432,
+          58.794905,
+          58.726485,
+          58.648622,
+          58.350514,
+          58.128419,
+          58.075436
         ],
-        "full_count": 104,
-        "min": 0.549671,
-        "max": 59.763547
+        "full_count": 1600,
+        "min": 5.484208,
+        "max": 1270.602496
       },
-      "effective_rank": 77.0907,
-      "condition_number": 108.7261,
+      "effective_rank": 1340.9447,
+      "condition_number": 231.6839,
       "noise_stability": {
         "noise_std": 0.01,
-        "mean_frobenius_distance_per_sample": 0.292487
+        "mean_frobenius_distance_per_sample": 0.118199,
+        "note": "Out-of-range perturbations are absorbed by min-max clipping before quantisation; delta is a lower bound on true sensitivity."
       }
     }
   ]

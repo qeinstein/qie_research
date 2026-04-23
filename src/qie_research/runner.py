@@ -509,6 +509,7 @@ MODEL_REGISTRY: dict[str, callable] = {
     "rbf_svm": _build_rbf_svm,
     "mlp": _build_mlp,
 }
+TORCH_BASELINE_MODELS = {"torch_mlp"}
 
 # Seed control
 
@@ -773,13 +774,15 @@ def _run_baseline(
 
 # Main runner
 
-def run(config_path: str | Path) -> dict:
+def run(config_path: str | Path, torch_only: bool = False) -> dict:
     """
     Execute a full benchmark run from a YAML config file.
 
     Parameters
     ----------
     config_path : str or Path
+    torch_only : bool
+        If True, skip sklearn training paths.
 
     Returns
     -------
@@ -846,16 +849,23 @@ def run(config_path: str | Path) -> dict:
             encoder, X_train, X_test
         )
 
-        # Build model, inject seed for reproducibility
-        model_cfg = cfg["model"]
-        model_params = {k: v for k, v in model_cfg.items() if k != "name"}
-        model_params["_seed"] = seed
-        model = MODEL_REGISTRY[model_cfg["name"]](model_params)
+        if not torch_only:
+            # Build model, inject seed for reproducibility
+            model_cfg = cfg["model"]
+            model_params = {k: v for k, v in model_cfg.items() if k != "name"}
+            model_params["_seed"] = seed
+            model = MODEL_REGISTRY[model_cfg["name"]](model_params)
 
-        # Train and evaluate (sklearn linear head)
-        metrics, train_time, train_mem = _train_and_evaluate(
-            model, X_train_enc, y_train, X_test_enc, y_test
-        )
+            # Train and evaluate (sklearn linear head)
+            metrics, train_time, train_mem = _train_and_evaluate(
+                model, X_train_enc, y_train, X_test_enc, y_test
+            )
+            sklearn_skipped = False
+        else:
+            # Skip sklearn training
+            metrics = None
+            train_time, train_mem = 0.0, 0
+            sklearn_skipped = True
 
         # Activated when the config contains a top-level ``torch:`` block.
         # Trains nn.Linear on the frozen encoded features and records
@@ -881,6 +891,7 @@ def run(config_path: str | Path) -> dict:
             "input_dim": int(X_train.shape[1]),
             "output_dim": int(encoder.output_dim_),
             "metrics": metrics,
+            "sklearn_skipped": sklearn_skipped,
             "timing_seconds": {
                 "encoding": round(enc_time, 6),
                 "training": round(train_time, 6),
@@ -904,6 +915,9 @@ def run(config_path: str | Path) -> dict:
 
     baseline_results = []
     for bl_cfg in cfg.get("baselines", []):
+        model_name = bl_cfg.get("model", {}).get("name") or ""
+        if torch_only and model_name not in TORCH_BASELINE_MODELS:
+            continue
         bl_result = _run_baseline(
             bl_cfg, X_train, y_train, X_test, y_test,
             seed=seed,
@@ -945,17 +959,38 @@ def main() -> None:
         type=str,
         help="Path to the YAML config file (e.g. configs/smoke_test.yaml).",
     )
+    parser.add_argument(
+        "--torch-only",
+        action="store_true",
+        help="Skip sklearn training paths and only run PyTorch differentiable paths.",
+    )
     args = parser.parse_args()
 
-    results = run(args.config)
+    results = run(args.config, torch_only=args.torch_only)
 
     print("\nQIE Encodings")
     print("-" * 62)
     for r in results["results"]:
+        metrics = r["metrics"]
+        metric_source = "sklearn"
+        if metrics is None and r["torch_linear_head"] is not None:
+            metrics = r["torch_linear_head"].get("metrics")
+            metric_source = "torch_linear_head"
+        elif metrics is None:
+            metric_source = "none"
+
+        if metrics is None:
+            acc_text = "n/a"
+            f1_text = "n/a"
+        else:
+            acc_text = f"{metrics['accuracy']:.4f}"
+            f1_text = f"{metrics['f1_macro']:.4f}"
+
         print(
             f"  {r['encoding']:<12}"
-            f"  accuracy={r['metrics']['accuracy']:.4f}"
-            f"  f1={r['metrics']['f1_macro']:.4f}"
+            f"  accuracy={acc_text}"
+            f"  f1={f1_text}"
+            f"  source={metric_source}"
             f"  enc={r['timing_seconds']['encoding']:.4f}s"
             f"  train={r['timing_seconds']['training']:.4f}s"
             f"  d_out={r['output_dim']}"

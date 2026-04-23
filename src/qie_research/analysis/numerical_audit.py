@@ -39,15 +39,17 @@ Usage
 
 from __future__ import annotations
 
+import argparse
 import json
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
-from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
 
 from qie_research.encodings import ENCODING_REGISTRY
+from qie_research.runner import DATASET_REGISTRY
 
 # Constants
 
@@ -169,7 +171,7 @@ def _verify_invariants(enc_name: str, encoder, X_enc: np.ndarray) -> dict:
 
 # Main audit
 
-def run_audit() -> dict:
+def run_audit(dataset_name: str = "wine", dataset_params: dict | None = None) -> dict:
     """
     Run the full numerical audit across all encodings.
 
@@ -182,19 +184,24 @@ def run_audit() -> dict:
     rng = np.random.default_rng(SEED)
 
     # Load dataset
-    data = load_wine()
-    X, y = data.data, data.target
+    params = dataset_params or {}
+    if dataset_name not in DATASET_REGISTRY:
+        raise ValueError(f"Unknown dataset: {dataset_name}")
+    
+    X, y = DATASET_REGISTRY[dataset_name](params)
+    
     X_train, X_test, _, _ = train_test_split(
         X, y, test_size=0.2, random_state=SEED, stratify=y
     )
 
     dataset_info = {
-        "name": "wine",
+        "name": dataset_name,
         "n_train": int(X_train.shape[0]),
         "n_test": int(X_test.shape[0]),
         "n_features": int(X_train.shape[1]),
-        "noise_std": NOISE_STD,
+        "perturbation_noise_std": NOISE_STD,
         "seed": SEED,
+        "params": params,
     }
 
     encoding_audits = []
@@ -267,8 +274,37 @@ def run_audit() -> dict:
 
 # CLI entry point
 
-def main() -> None:
-    report = run_audit()
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Run the Phase 2 Numerical Audit.")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="wine",
+        help="Dataset name (e.g. wine, high_rank_noise).",
+    )
+    parser.add_argument(
+        "--n-features",
+        type=int,
+        default=200,
+        help="Number of features for synthetic datasets.",
+    )
+    parser.add_argument(
+        "--noise-std",
+        type=float,
+        default=2.0,
+        help="Noise std for high_rank_noise.",
+    )
+    args = parser.parse_args([] if argv is None else argv)
+
+    params = {}
+    if args.dataset == "high_rank_noise":
+        params = {
+            "n_features": args.n_features,
+            "noise_std": args.noise_std,
+            "n_samples": 5000,
+        }
+
+    report = run_audit(args.dataset, params)
 
     print("\nNumerical Audit Summary")
     print("-" * 60)
@@ -286,4 +322,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

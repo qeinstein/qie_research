@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
 import pytest
 
 from qie_research.analysis.numerical_audit import _set_seeds, run_audit
@@ -116,3 +114,16 @@ def test_numerical_audit_main(tmp_path, capsys):
     assert "amplitude" in out
     assert "angle" in out
     assert "basis" in out
+
+
+def test_numerical_audit_main_accepts_argv(tmp_path, capsys):
+    import qie_research.analysis.numerical_audit as audit_mod
+    orig = audit_mod.OUTPUT_PATH
+    audit_mod.OUTPUT_PATH = tmp_path / "audit.json"
+    try:
+        audit_mod.main(["--dataset", "high_rank_noise", "--n-features", "32", "--noise-std", "1.5"])
+    finally:
+        audit_mod.OUTPUT_PATH = orig
+
+    out = capsys.readouterr().out
+    assert "Numerical Audit Summary" in out

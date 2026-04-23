@@ -159,11 +159,17 @@ def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
     # Similar to a Pearson correlation coefficient.
     denominator = np.sqrt(hsic_kk * hsic_ll)
     
-    if denominator == 0:
-        print("  WARNING: Denominator is zero (constant feature map). Returning 0.0.")
+    if not np.isfinite(denominator) or denominator <= 0 or np.isclose(denominator, 0.0):
+        print(
+            "  WARNING: Denominator is zero or numerically unstable "
+            "(constant feature map or floating-point error). Returning 0.0."
+        )
         return 0.0
 
     cka_score = hsic_kl / denominator
+    if not np.isfinite(cka_score):
+        print("  WARNING: CKA score is non-finite. Returning 0.0.")
+        return 0.0
     print(f"  CKA score calculated: {cka_score:.6f}")
     
     return float(cka_score)

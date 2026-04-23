@@ -132,11 +132,12 @@ For each dataset and method family:
 
 This phase must answer:
 
-- Are QIE representations geometrically distinct from classical baselines?
-- If performance differs, is the difference associated with rank expansion, conditioning, spectral behavior, or optimization geometry?
+- Are QIE representations geometrically distinct from classical baselines using `cka_analysis.py`?
+- If performance differs, is the difference associated with rank expansion (e-rank), conditioning (kappa), spectral behavior, or optimization geometry (NTK)?
 - Are any gains worth the practical encoding overhead?
 
-This is the phase where equivalence findings become publication-strength rather than disappointing leftovers.
+Outcome validation:
+- Run CKA similarity matrices across all (encoding, baseline) pairs for each dataset to distinguish 'unique' representations (CKA < 0.6) from 'redundant' ones (CKA > 0.9).
 
 ## Explicit Stop Rules
 

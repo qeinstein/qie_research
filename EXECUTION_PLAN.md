@@ -263,7 +263,7 @@ Deliverables:
 
 Mandatory analyses:
 
-- Centered Kernel Alignment between QIE and classical kernel representations.
+- Centered Kernel Alignment (CKA) between QIE and classical kernel representations using `cka_analysis.py`.
 - NTK comparison across QIE and classical baselines.
 - Effective-rank versus performance analysis.
 - Conditioning versus convergence analysis.
@@ -272,7 +272,7 @@ Mandatory analyses:
 
 Mandatory ablation:
 
-- Compare high-dimensional amplitude encoding against a Random Fourier Features baseline with matched output dimensionality.
+- Compare high-dimensional amplitude encoding against a Random Fourier Features baseline with matched output dimensionality using CKA to quantify geometric overlap.
 
 Deliverables:
 

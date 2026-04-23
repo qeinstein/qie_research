@@ -244,7 +244,7 @@ def main() -> None:
 
     # Comparison Representation
     if args.compare_to == "pca":
-        n_comp = min(X_qie.shape[1], X_train.shape[1])
+        n_comp = min(X_train.shape[0], X_train.shape[1], X_qie.shape[1])
         print(f"  Fitting PCA with {n_comp} components...")
         pca = PCA(n_components=n_comp)
         X_comp = pca.fit_transform(X_train)

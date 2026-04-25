@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # QIE Research: Full Experimental Sweep Master Script
-# Usage: ./run_full_sweep.sh [--torch-only]
-
-TORCH_FLAG=""
 # Usage: ./run_full_sweep.sh [--torch-only] [--skip-install]
+#
+# Runs all 10 datasets × 5 seeds = 500 total (dataset, method) evaluations.
+# Results are written to results/metrics/<dataset>_seed<N>.json.
 
 TORCH_FLAG=""
 SKIP_INSTALL=0
@@ -20,34 +20,8 @@ for arg in "$@"; do
     fi
 done
 
-# 1. Environment Setup
-echo "--- Step 1: Environment Setup ---"
-if [ "$SKIP_INSTALL" -eq 0 ]; then
-    python3 -m pip install -r requirements.txt
-fi
-mkdir -p data/raw
-mkdir -p results/metrics
-
-# 2. Data Preparation
-echo "--- Step 2: Data Preparation ---"
-
-# These are automated
-python3 -m qie_research.datasets.prepare_dry_bean
-python3 -m qie_research.datasets.prepare_fashion_mnist
-python3 -m qie_research.datasets.prepare_cifar10
-python3 -m qie_research.datasets.prepare_higgs
-python3 -m qie_research.datasets.prepare_covertype
-
-# Credit Card Fraud requires manual download check
-if [ -f "data/raw/creditcard.csv" ]; then
-    python3 -m qie_research.datasets.prepare_credit_card_fraud
-else
-    echo "WARNING: data/raw/creditcard.csv not found. Skipping Credit Card Fraud preparation."
-    echo "To include this dataset, download it from Kaggle and place it in data/raw/ before running."
-fi
-
-# 3. Execution Sweep
-echo "--- Step 3: Executing Benchmark Sweep ---"
+# Seeds from configs/seed_registry.yaml — must match exactly.
+SEEDS=(42 1337 2026 7 99)
 
 CONFIGS=(
     "configs/wine.yaml"
@@ -62,19 +36,41 @@ CONFIGS=(
     "configs/credit_card_fraud.yaml"
 )
 
+# 1. Environment Setup
+echo "--- Step 1: Environment Setup ---"
+if [ "$SKIP_INSTALL" -eq 0 ]; then
+    pip install -r requirements-runpod.txt
+    pip install -e .
+fi
+mkdir -p data/raw data/processed results/metrics
+
+# 2. Data Preparation (idempotent — scripts skip if cache exists)
+echo "--- Step 2: Data Preparation ---"
+python3 -m qie_research.datasets.prepare_dry_bean
+python3 -m qie_research.datasets.prepare_fashion_mnist
+python3 -m qie_research.datasets.prepare_cifar10
+python3 -m qie_research.datasets.prepare_higgs
+python3 -m qie_research.datasets.prepare_covertype
+python3 -m qie_research.datasets.prepare_credit_card_fraud
+
+# 3. Execution Sweep — 10 datasets × 5 seeds
+echo "--- Step 3: Executing Benchmark Sweep (${#CONFIGS[@]} datasets × ${#SEEDS[@]} seeds) ---"
+
+TOTAL=$(( ${#CONFIGS[@]} * ${#SEEDS[@]} ))
+DONE=0
+
 for CFG in "${CONFIGS[@]}"; do
-    if [ -f "$CFG" ]; then
-        echo "Processing $CFG..."
-        # Check if it's credit_card_fraud and if we should skip it
-        if [[ "$CFG" == *"credit_card_fraud"* ]] && [ ! -f "data/raw/credit_card_fraud_X.npy" ]; then
-            echo "Skipping $CFG (data not prepared)."
-            continue
-        fi
-        
-        python3 -m qie_research.runner "$CFG" $TORCH_FLAG
-    else
-        echo "Error: Config $CFG not found."
+    if [ ! -f "$CFG" ]; then
+        echo "ERROR: Config $CFG not found — skipping."
+        continue
     fi
+
+    for SEED in "${SEEDS[@]}"; do
+        DONE=$(( DONE + 1 ))
+        echo "[$DONE/$TOTAL] $CFG  seed=$SEED"
+        python3 -m qie_research.runner "$CFG" --seed "$SEED" $TORCH_FLAG
+    done
 done
 
-echo "--- Sweep Complete. Results are in results/metrics/ ---"
+echo ""
+echo "--- Sweep complete. Results are in results/metrics/ ---"

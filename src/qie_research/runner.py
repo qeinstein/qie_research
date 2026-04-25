@@ -774,7 +774,7 @@ def _run_baseline(
 
 # Main runner
 
-def run(config_path: str | Path, torch_only: bool = False) -> dict:
+def run(config_path: str | Path, torch_only: bool = False, seed_override: int | None = None) -> dict:
     """
     Execute a full benchmark run from a YAML config file.
 
@@ -783,6 +783,9 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
     config_path : str or Path
     torch_only : bool
         If True, skip sklearn training paths.
+    seed_override : int or None
+        If provided, overrides the seed specified in the config file.
+        Used by the sweep script to loop over the registered seed set.
 
     Returns
     -------
@@ -796,8 +799,9 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
     with config_path.open() as f:
         cfg = yaml.safe_load(f)
 
-    # Seed control — must happen before anything else
-    seed = cfg["run"]["seed"]
+    # Seed control — must happen before anything else.
+    # CLI --seed overrides the config value when running multi-seed sweeps.
+    seed = seed_override if seed_override is not None else cfg["run"]["seed"]
     _set_seeds(seed)
 
     # 2. Load dataset and split into train/test
@@ -930,6 +934,7 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
         "run": {
             "name": cfg["run"]["name"],
             "seed": seed,
+            "seed_overridden": seed_override is not None,
             "config_path": str(config_path),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
@@ -940,7 +945,7 @@ def run(config_path: str | Path, torch_only: bool = False) -> dict:
 
     output_dir = Path(cfg["run"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{cfg['run']['name']}.json"
+    output_path = output_dir / f"{cfg['run']['name']}_seed{seed}.json"
 
     with output_path.open("w") as f:
         json.dump(output, f, indent=2)
@@ -964,9 +969,15 @@ def main() -> None:
         action="store_true",
         help="Skip sklearn training paths and only run PyTorch differentiable paths.",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Override the seed in the config file. Used by the sweep script for multi-seed runs.",
+    )
     args = parser.parse_args()
 
-    results = run(args.config, torch_only=args.torch_only)
+    results = run(args.config, torch_only=args.torch_only, seed_override=args.seed)
 
     print("\nQIE Encodings")
     print("-" * 62)

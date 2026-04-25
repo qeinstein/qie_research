@@ -39,10 +39,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import random
 import sys
 import time
 import tracemalloc
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -774,6 +776,42 @@ def _run_baseline(
 
 # Main runner
 
+def _setup_run_logger(name: str, seed: int, log_dir: Path) -> logging.Logger:
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{name}_seed{seed}.txt"
+
+    logger = logging.getLogger(f"qie.run.{name}.{seed}")
+    logger.setLevel(logging.DEBUG)
+    logger.handlers.clear()
+    logger.propagate = False
+
+    fmt = logging.Formatter(
+        fmt="%(asctime)s UTC | %(levelname)-8s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    fmt.converter = time.gmtime
+
+    fh = logging.FileHandler(log_path, mode="w", encoding="utf-8")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(fmt)
+    logger.addHandler(fh)
+
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setLevel(logging.INFO)
+    sh.setFormatter(fmt)
+    logger.addHandler(sh)
+
+    # Route Python warnings (e.g. sklearn ConvergenceWarning) into the log.
+    logging.captureWarnings(True)
+    warn_logger = logging.getLogger("py.warnings")
+    warn_logger.handlers.clear()
+    warn_logger.addHandler(fh)
+    warn_logger.propagate = False
+    warnings.filterwarnings("always")
+
+    return logger
+
+
 def run(config_path: str | Path, torch_only: bool = False, seed_override: int | None = None) -> dict:
     """
     Execute a full benchmark run from a YAML config file.
@@ -792,6 +830,8 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
     results : dict
         The full results dictionary, also written to disk as JSON.
     """
+    run_start = time.perf_counter()
+
     config_path = Path(config_path)
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -804,7 +844,24 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
     seed = seed_override if seed_override is not None else cfg["run"]["seed"]
     _set_seeds(seed)
 
-    # 2. Load dataset and split into train/test
+    run_name = cfg["run"]["name"]
+    output_dir = Path(cfg["run"]["output_dir"])
+    log_dir = output_dir.parent / "logs"
+
+    logger = _setup_run_logger(run_name, seed, log_dir)
+
+    logger.info("=" * 70)
+    logger.info("QIE BENCHMARK RUN")
+    logger.info("=" * 70)
+    logger.info(f"config     : {config_path}")
+    logger.info(f"run name   : {run_name}")
+    logger.info(f"seed       : {seed}%s", "  (overridden via CLI)" if seed_override is not None else "")
+    logger.info(f"torch_only : {torch_only}")
+    logger.info(f"python     : {sys.version.split()[0]}")
+    logger.info(f"started    : {datetime.now(timezone.utc).isoformat()}")
+    logger.info("-" * 70)
+
+    # Load dataset
     dataset_cfg = cfg["dataset"]
     dataset_name = dataset_cfg["name"]
 
@@ -814,9 +871,12 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
             f"Available: {list(DATASET_REGISTRY.keys())}"
         )
 
+    logger.info(f"[DATASET] loading '{dataset_name}' ...")
+    t_data = time.perf_counter()
     X, y = DATASET_REGISTRY[dataset_name](dataset_cfg)
-    test_size = dataset_cfg.get("test_size", 0.2)
+    logger.info(f"[DATASET] loaded  shape=({X.shape[0]}, {X.shape[1]})  classes={sorted(set(y.tolist()))}  elapsed={time.perf_counter()-t_data:.3f}s")
 
+    test_size = dataset_cfg.get("test_size", 0.2)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
         test_size=test_size,
@@ -824,15 +884,18 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
         stratify=y,
     )
 
+    n_classes = int(len(np.unique(y)))
     dataset_info = {
         "name": dataset_name,
         "n_train": int(X_train.shape[0]),
         "n_test": int(X_test.shape[0]),
         "n_features": int(X_train.shape[1]),
-        "n_classes": int(len(np.unique(y))),
+        "n_classes": n_classes,
     }
+    logger.info(f"[DATASET] split    n_train={X_train.shape[0]}  n_test={X_test.shape[0]}  n_features={X_train.shape[1]}  n_classes={n_classes}  test_size={test_size}")
+    logger.info("-" * 70)
 
-    # Run each encoding
+    # QIE encodings
     encoding_results = []
 
     for enc_cfg in cfg["encodings"]:
@@ -844,39 +907,39 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
                 f"Available: {list(ENCODING_REGISTRY.keys())}"
             )
 
-        # Build encoder, pass all config keys except 'name'
         enc_params = {k: v for k, v in enc_cfg.items() if k != "name"}
         encoder = ENCODING_REGISTRY[enc_name](**enc_params)
 
-        # Encode
-        X_train_enc, X_test_enc, enc_time, enc_mem = _encode(
-            encoder, X_train, X_test
-        )
+        logger.info(f"[ENCODING] {enc_name}  params={enc_params}")
+        X_train_enc, X_test_enc, enc_time, enc_mem = _encode(encoder, X_train, X_test)
+        logger.info(f"[ENCODING] {enc_name}  done  d_in={X_train.shape[1]}  d_out={encoder.output_dim_}  time={enc_time:.4f}s  peak_mem={enc_mem/1024:.1f}KB")
 
         if not torch_only:
-            # Build model, inject seed for reproducibility
             model_cfg = cfg["model"]
             model_params = {k: v for k, v in model_cfg.items() if k != "name"}
             model_params["_seed"] = seed
             model = MODEL_REGISTRY[model_cfg["name"]](model_params)
 
-            # Train and evaluate (sklearn linear head)
+            logger.info(f"[SKLEARN]  {enc_name}  training {model_cfg['name']} ...")
             metrics, train_time, train_mem = _train_and_evaluate(
                 model, X_train_enc, y_train, X_test_enc, y_test
             )
+            logger.info(
+                f"[SKLEARN]  {enc_name}  accuracy={metrics['accuracy']:.6f}  "
+                f"f1_macro={metrics['f1_macro']:.6f}  "
+                f"time={train_time:.4f}s  peak_mem={train_mem/1024:.1f}KB"
+            )
             sklearn_skipped = False
         else:
-            # Skip sklearn training
+            logger.info(f"[SKLEARN]  {enc_name}  skipped (torch_only=True)")
             metrics = None
             train_time, train_mem = 0.0, 0
             sklearn_skipped = True
 
-        # Activated when the config contains a top-level ``torch:`` block.
-        # Trains nn.Linear on the frozen encoded features and records
-        # per-epoch loss and gradient norm curves.
         torch_cfg = cfg["run"].get("torch", None)
         if torch_cfg is not None:
             from qie_research.models.torch_trainer import train_linear_head
+            logger.info(f"[TORCH]    {enc_name}  training linear head  epochs={torch_cfg.get('epochs', 100)}  lr={torch_cfg.get('lr', 1e-3)}")
             torch_result = train_linear_head(
                 X_train_enc, y_train, X_test_enc, y_test,
                 n_epochs=int(torch_cfg.get("epochs", 100)),
@@ -885,6 +948,12 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
                 batch_size=int(torch_cfg.get("batch_size", 256)),
                 seed=seed,
                 encoding_name=enc_name,
+            )
+            torch_metrics = torch_result.get("metrics", {})
+            logger.info(
+                f"[TORCH]    {enc_name}  done  accuracy={torch_metrics.get('accuracy', 'n/a')}  "
+                f"f1_macro={torch_metrics.get('f1_macro', 'n/a')}  "
+                f"time={torch_result.get('timing_seconds', 0):.4f}s"
             )
         else:
             torch_result = None
@@ -908,49 +977,74 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
             "torch_linear_head": torch_result,
         })
 
-    # n_components_auto is the median QIE output dimension for this run.
-    # Median is used rather than mean because basis encoding's output dimension
-    # (d * n_bits, e.g. 13*8=104 for wine) dominates an arithmetic mean and
-    # inflates the matched budget far beyond amplitude encoding's output (16),
-    # producing an unfair comparison for amplitude.  Median is more robust to
-    # this skew across the three encoding scales.
+    logger.info("-" * 70)
+
+    # Matched budget for baselines
     qie_d_outs = [r["output_dim"] for r in encoding_results]
     n_components_auto = int(np.median(qie_d_outs))
+    logger.info(f"[BUDGET]   QIE d_outs={qie_d_outs}  n_components_auto (median)={n_components_auto}")
+    logger.info("-" * 70)
 
+    # Classical baselines
     baseline_results = []
     for bl_cfg in cfg.get("baselines", []):
         model_name = bl_cfg.get("model", {}).get("name") or ""
         if torch_only and model_name not in TORCH_BASELINE_MODELS:
             continue
+
+        bl_name = bl_cfg["name"]
+        fm_name = bl_cfg.get("feature_map", {}).get("name", "none")
+        max_s = bl_cfg.get("max_samples")
+        logger.info(f"[BASELINE] {bl_name}  feature_map={fm_name}  model={model_name}  max_samples={max_s}")
+
         bl_result = _run_baseline(
             bl_cfg, X_train, y_train, X_test, y_test,
             seed=seed,
             n_components_auto=n_components_auto,
         )
+
+        bl_metrics = bl_result.get("metrics", {})
+        t = bl_result["timing_seconds"]
+        total_t = t if isinstance(t, (int, float)) else t.get("total", 0)
+        logger.info(
+            f"[BASELINE] {bl_name}  done  accuracy={bl_metrics.get('accuracy', 'n/a'):.6f}  "
+            f"f1_macro={bl_metrics.get('f1_macro', 'n/a'):.6f}  "
+            f"d_feat={bl_result['feature_dim']}  time={total_t:.4f}s"
+        )
         baseline_results.append(bl_result)
 
     # Assemble and write results
+    timestamp = datetime.now(timezone.utc).isoformat()
     output = {
         "run": {
-            "name": cfg["run"]["name"],
+            "name": run_name,
             "seed": seed,
             "seed_overridden": seed_override is not None,
             "config_path": str(config_path),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": timestamp,
         },
         "dataset": dataset_info,
         "results": encoding_results,
         "baselines": baseline_results,
     }
 
-    output_dir = Path(cfg["run"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{cfg['run']['name']}_seed{seed}.json"
+    output_path = output_dir / f"{run_name}_seed{seed}.json"
 
     with output_path.open("w") as f:
         json.dump(output, f, indent=2)
 
-    print(f"Results written to {output_path}")
+    total_elapsed = time.perf_counter() - run_start
+    logger.info("=" * 70)
+    logger.info(f"RUN COMPLETE  total_time={total_elapsed:.2f}s  ({total_elapsed/60:.1f}min)")
+    logger.info(f"results -> {output_path}")
+    logger.info(f"log     -> {log_dir / f'{run_name}_seed{seed}.txt'}")
+    logger.info("=" * 70)
+
+    for h in logger.handlers:
+        h.flush()
+        h.close()
+
     return output
 
 # CLI entry point

@@ -846,7 +846,7 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
 
     run_name = cfg["run"]["name"]
     output_dir = Path(cfg["run"]["output_dir"])
-    log_dir = output_dir.parent / "logs"
+    log_dir = output_dir.parent / "logs" / run_name
 
     logger = _setup_run_logger(run_name, seed, log_dir)
 
@@ -1028,8 +1028,9 @@ def run(config_path: str | Path, torch_only: bool = False, seed_override: int | 
         "baselines": baseline_results,
     }
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{run_name}_seed{seed}.json"
+    run_dir = output_dir / run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    output_path = run_dir / f"{run_name}_seed{seed}.json"
 
     with output_path.open("w") as f:
         json.dump(output, f, indent=2)

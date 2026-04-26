@@ -1,11 +1,14 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
+# Note: -e is intentionally omitted so individual run failures don't abort the sweep.
 
 # QIE Research: Full Experimental Sweep Master Script
 # Usage: ./run_full_sweep.sh [--torch-only] [--skip-install]
 #
 # Runs all 10 datasets × 5 seeds = 500 total (dataset, method) evaluations.
-# Results are written to results/metrics/<dataset>_seed<N>.json.
+# Results  -> results/metrics/<dataset>_seed<N>.json
+# Logs     -> results/logs/<dataset>_seed<N>.txt
+# Failures -> results/failed_runs.txt  (one "config seed" entry per failed run)
 
 TORCH_FLAG=""
 SKIP_INSTALL=0
@@ -42,7 +45,11 @@ if [ "$SKIP_INSTALL" -eq 0 ]; then
     pip install -r requirements-runpod.txt
     pip install -e .
 fi
-mkdir -p data/raw data/processed results/metrics
+mkdir -p data/raw data/processed results/metrics results/logs
+
+FAILED_LOG="results/failed_runs.txt"
+# Start fresh — don't append to a previous failure log
+> "$FAILED_LOG"
 
 # 2. Data Preparation (idempotent — scripts skip if cache exists)
 echo "--- Step 2: Data Preparation ---"
@@ -58,6 +65,7 @@ echo "--- Step 3: Executing Benchmark Sweep (${#CONFIGS[@]} datasets × ${#SEEDS
 
 TOTAL=$(( ${#CONFIGS[@]} * ${#SEEDS[@]} ))
 DONE=0
+N_FAILED=0
 
 for CFG in "${CONFIGS[@]}"; do
     if [ ! -f "$CFG" ]; then
@@ -68,9 +76,24 @@ for CFG in "${CONFIGS[@]}"; do
     for SEED in "${SEEDS[@]}"; do
         DONE=$(( DONE + 1 ))
         echo "[$DONE/$TOTAL] $CFG  seed=$SEED"
-        python3 -m qie_research.runner "$CFG" --seed "$SEED" $TORCH_FLAG
+
+        if python3 -m qie_research.runner "$CFG" --seed "$SEED" $TORCH_FLAG; then
+            : # success — nothing to do
+        else
+            N_FAILED=$(( N_FAILED + 1 ))
+            echo "  FAILED: $CFG seed=$SEED — logged to $FAILED_LOG"
+            echo "$CFG $SEED" >> "$FAILED_LOG"
+        fi
     done
 done
 
 echo ""
-echo "--- Sweep complete. Results are in results/metrics/ ---"
+echo "--- Sweep complete ---"
+echo "    Total : $TOTAL"
+echo "    Failed: $N_FAILED"
+if [ "$N_FAILED" -gt 0 ]; then
+    echo "    Failed runs listed in: $FAILED_LOG"
+    echo "    Rerun them with: ./retry_failed.sh"
+fi
+echo "    Results -> results/metrics/"
+echo "    Logs    -> results/logs/"

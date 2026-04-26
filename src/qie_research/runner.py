@@ -613,7 +613,7 @@ def _train_and_evaluate(
 
     metrics = {
         "accuracy": round(float(accuracy_score(y_test, y_pred)), 6),
-        "f1_macro": round(float(f1_score(y_test, y_pred, average="macro")), 6),
+        "f1_macro": round(float(f1_score(y_test, y_pred, average="macro", zero_division=0)), 6),
     }
     return metrics, elapsed, peak
 

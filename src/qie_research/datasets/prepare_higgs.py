@@ -146,6 +146,10 @@ def prepare(
     n_subset: int = N_SUBSET,
     seed: int = RANDOM_SEED,
 ) -> None:
+    if cache_x.exists() and cache_y.exists():
+        print("Cache already exists — skipping download and processing.")
+        return
+
     download_dir.mkdir(parents=True, exist_ok=True)
 
     if not raw_gz.exists():

@@ -104,10 +104,7 @@ data/processed/**/*
 !data/processed/**/
 !data/processed/**/.gitkeep
 
-# Heavy runtime logs
-results/logs/**/*
-!results/logs/**/
-!results/logs/**/.gitkeep
+# results/logs are tracked (500 per-run txt files needed for analysis)
 
 # Binary model and tensor formats
 *.ckpt

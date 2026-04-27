@@ -12,7 +12,7 @@ dataset:
   name: fashion_mnist
   test_size: 0.2
   data_home: data/raw/
-  # max_samples: 10000  # uncomment for faster dev runs
+  max_samples: 10000
 
 encodings:
   - name: amplitude

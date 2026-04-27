@@ -100,7 +100,9 @@ explicitly in the paper's Experimental Setup section.
 ### Large-Scale Tabular
 
 - Covertype (581,012 samples, 54 features, 7 classes) — tests whether
-  encoding overhead remains practical at large scale.
+  encoding overhead remains practical at large scale. Subsampled to 50,000
+  for computational tractability; must be stated in the paper's Experimental
+  Setup section.
 
 ### Pruning rules
 

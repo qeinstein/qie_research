@@ -74,6 +74,15 @@ was changed.
   image benchmark with richer texture and colour structure; expected by
   reviewers at top venues alongside Fashion-MNIST.
 
+**Computational note (image datasets):** Both Fashion-MNIST and CIFAR-10 are
+subsampled to 10,000 examples (stratified by class) for the benchmark sweep.
+At full scale, basis encoding expands 784 features to 6,272 dimensions and
+3,072 features to 24,576 dimensions; logistic regression on 56,000–60,000
+training samples at these dimensionalities takes several hours per seed and
+would exceed the available compute budget. The 10,000-sample cap is consistent
+with common practice in tabular encoding benchmarks and must be stated
+explicitly in the paper's Experimental Setup section.
+
 ### Physics / Large-Scale
 
 - HIGGS 500k subset (500,000 samples, 21 features, binary) — canonical

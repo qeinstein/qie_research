@@ -1,0 +1,52 @@
+2026-04-28 00:48:03 UTC | INFO     | ======================================================================
+2026-04-28 00:48:03 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-28 00:48:03 UTC | INFO     | ======================================================================
+2026-04-28 00:48:03 UTC | INFO     | config     : configs/high_rank_noise.yaml
+2026-04-28 00:48:03 UTC | INFO     | run name   : high_rank_noise
+2026-04-28 00:48:03 UTC | INFO     | seed       : 1337  (overridden via CLI)
+2026-04-28 00:48:03 UTC | INFO     | torch_only : False
+2026-04-28 00:48:03 UTC | INFO     | python     : 3.11.10
+2026-04-28 00:48:03 UTC | INFO     | started    : 2026-04-28T00:48:03.407429+00:00
+2026-04-28 00:48:03 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:48:03 UTC | INFO     | [DATASET] loading 'high_rank_noise' ...
+2026-04-28 00:48:03 UTC | INFO     | [DATASET] loaded  shape=(5000, 200)  classes=[0, 1]  elapsed=0.014s
+2026-04-28 00:48:03 UTC | INFO     | [DATASET] split    n_train=4000  n_test=1000  n_features=200  n_classes=2  test_size=0.2
+2026-04-28 00:48:03 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:48:03 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-28 00:48:03 UTC | INFO     | [ENCODING] amplitude  done  d_in=200  d_out=256  time=0.0071s  peak_mem=20533.7KB
+2026-04-28 00:48:03 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-28 00:48:03 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.813000  f1_macro=0.812958  time=0.3343s  peak_mem=245.0KB
+2026-04-28 00:48:03 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-28 00:48:04 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.819  f1_macro=0.818978  time=0.6278s
+2026-04-28 00:48:04 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-28 00:48:04 UTC | INFO     | [ENCODING] angle  done  d_in=200  d_out=400  time=0.0248s  peak_mem=43755.7KB
+2026-04-28 00:48:04 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-28 00:48:05 UTC | INFO     | [SKLEARN]  angle  accuracy=0.806000  f1_macro=0.805997  time=0.8604s  peak_mem=277.1KB
+2026-04-28 00:48:05 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-28 00:48:06 UTC | INFO     | [TORCH]    angle  done  accuracy=0.82  f1_macro=0.819999  time=0.5861s
+2026-04-28 00:48:06 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-28 00:48:06 UTC | INFO     | [ENCODING] basis  done  d_in=200  d_out=1600  time=0.0202s  peak_mem=65631.4KB
+2026-04-28 00:48:06 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-28 00:48:10 UTC | INFO     | [SKLEARN]  basis  accuracy=0.712000  f1_macro=0.711907  time=4.5914s  peak_mem=50641.9KB
+2026-04-28 00:48:10 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-28 00:48:11 UTC | INFO     | [TORCH]    basis  done  accuracy=0.724  f1_macro=0.723841  time=0.5524s
+2026-04-28 00:48:11 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:48:11 UTC | INFO     | [BUDGET]   QIE d_outs=[256, 400, 1600]  n_components_auto (median)=400
+2026-04-28 00:48:11 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:48:11 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-28 00:48:11 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.815000  f1_macro=0.814958  d_feat=200  time=0.2349s
+2026-04-28 00:48:11 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-28 00:48:13 UTC | INFO     | [BASELINE] rff  done  accuracy=0.702000  f1_macro=0.701695  d_feat=400  time=2.0146s
+2026-04-28 00:48:13 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-28 00:48:14 UTC | INFO     | [BASELINE] pca  done  accuracy=0.816000  f1_macro=0.815964  d_feat=199  time=0.5827s
+2026-04-28 00:48:14 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=None
+2026-04-28 00:48:15 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.807000  f1_macro=0.806930  d_feat=200  time=0.6647s
+2026-04-28 00:48:15 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-28 00:48:19 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.799000  f1_macro=0.798966  d_feat=200  time=4.2390s
+2026-04-28 00:48:19 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-28 00:48:20 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.808000  f1_macro=0.807988  d_feat=200  time=0.9072s
+2026-04-28 00:48:20 UTC | INFO     | ======================================================================
+2026-04-28 00:48:20 UTC | INFO     | RUN COMPLETE  total_time=17.49s  (0.3min)
+2026-04-28 00:48:20 UTC | INFO     | results -> results/metrics/high_rank_noise/high_rank_noise_seed1337.json
+2026-04-28 00:48:20 UTC | INFO     | log     -> results/logs/high_rank_noise/high_rank_noise_seed1337.txt
+2026-04-28 00:48:20 UTC | INFO     | ======================================================================

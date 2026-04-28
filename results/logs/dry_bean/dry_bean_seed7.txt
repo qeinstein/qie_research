@@ -1,0 +1,66 @@
+2026-04-27 13:12:41 UTC | INFO     | ======================================================================
+2026-04-27 13:12:41 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 13:12:41 UTC | INFO     | ======================================================================
+2026-04-27 13:12:41 UTC | INFO     | config     : configs/dry_bean.yaml
+2026-04-27 13:12:41 UTC | INFO     | run name   : dry_bean
+2026-04-27 13:12:41 UTC | INFO     | seed       : 7  (overridden via CLI)
+2026-04-27 13:12:41 UTC | INFO     | torch_only : False
+2026-04-27 13:12:41 UTC | INFO     | python     : 3.11.10
+2026-04-27 13:12:41 UTC | INFO     | started    : 2026-04-27T13:12:41.975849+00:00
+2026-04-27 13:12:41 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 13:12:41 UTC | INFO     | [DATASET] loading 'dry_bean' ...
+2026-04-27 13:12:41 UTC | INFO     | [DATASET] loaded  shape=(13611, 16)  classes=[0, 1, 2, 3, 4, 5, 6]  elapsed=0.001s
+2026-04-27 13:12:41 UTC | INFO     | [DATASET] split    n_train=10888  n_test=2723  n_features=16  n_classes=7  test_size=0.2
+2026-04-27 13:12:41 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 13:12:41 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 13:12:41 UTC | INFO     | [ENCODING] amplitude  done  d_in=16  d_out=16  time=0.0022s  peak_mem=2957.6KB
+2026-04-27 13:12:41 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 13:12:42 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.260375  f1_macro=0.059024  time=0.0241s  peak_mem=1441.5KB
+2026-04-27 13:12:42 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 13:12:43 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.260375  f1_macro=0.059024  time=1.4524s
+2026-04-27 13:12:43 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 13:12:43 UTC | INFO     | [ENCODING] angle  done  d_in=16  d_out=32  time=0.0085s  peak_mem=9529.8KB
+2026-04-27 13:12:43 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 13:12:44 UTC | INFO     | [SKLEARN]  angle  accuracy=0.927653  f1_macro=0.939086  time=0.6696s  peak_mem=1468.7KB
+2026-04-27 13:12:44 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 13:12:45 UTC | INFO     | [TORCH]    angle  done  accuracy=0.916269  f1_macro=0.928723  time=1.3844s
+2026-04-27 13:12:45 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 13:12:45 UTC | INFO     | [ENCODING] basis  done  d_in=16  d_out=128  time=0.0062s  peak_mem=14292.6KB
+2026-04-27 13:12:45 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 13:12:58 UTC | INFO     | [SKLEARN]  basis  accuracy=0.918472  f1_macro=0.930520  time=12.2810s  peak_mem=12540.3KB
+2026-04-27 13:12:58 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 13:12:59 UTC | INFO     | [TORCH]    basis  done  accuracy=0.908557  f1_macro=0.918686  time=1.3507s
+2026-04-27 13:12:59 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 13:12:59 UTC | INFO     | [BUDGET]   QIE d_outs=[16, 32, 128]  n_components_auto (median)=32
+2026-04-27 13:12:59 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 13:12:59 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 13:12:59 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.923981  f1_macro=0.936339  d_feat=16  time=0.1458s
+2026-04-27 13:12:59 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 13:12:59 UTC | INFO     | [BASELINE] rff  done  accuracy=0.921777  f1_macro=0.933774  d_feat=32  time=0.2173s
+2026-04-27 13:12:59 UTC | INFO     | [BASELINE] poly2  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 13:13:10 UTC | INFO     | [BASELINE] poly2  done  accuracy=0.925450  f1_macro=0.937689  d_feat=152  time=10.2777s
+2026-04-27 13:13:10 UTC | INFO     | [BASELINE] poly3  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 13:16:46 UTC | INFO     | [BASELINE] poly3  done  accuracy=0.926184  f1_macro=0.937890  d_feat=968  time=216.4104s
+2026-04-27 13:16:46 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 13:16:51 UTC | WARNING  | /usr/local/lib/python3.11/dist-packages/sklearn/linear_model/_logistic.py:406: ConvergenceWarning: lbfgs failed to converge after 2000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=2000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+2026-04-27 13:16:51 UTC | INFO     | [BASELINE] pca  done  accuracy=0.906353  f1_macro=0.918043  d_feat=15  time=4.5024s
+2026-04-27 13:16:51 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=None
+2026-04-27 13:16:51 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.929122  f1_macro=0.941522  d_feat=16  time=0.3982s
+2026-04-27 13:16:51 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 13:17:21 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.930591  f1_macro=0.942319  d_feat=16  time=30.0818s
+2026-04-27 13:17:21 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 13:17:23 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.935365  f1_macro=0.946601  d_feat=16  time=2.3031s
+2026-04-27 13:17:23 UTC | INFO     | ======================================================================
+2026-04-27 13:17:23 UTC | INFO     | RUN COMPLETE  total_time=282.76s  (4.7min)
+2026-04-27 13:17:23 UTC | INFO     | results -> results/metrics/dry_bean/dry_bean_seed7.json
+2026-04-27 13:17:23 UTC | INFO     | log     -> results/logs/dry_bean/dry_bean_seed7.txt
+2026-04-27 13:17:23 UTC | INFO     | ======================================================================

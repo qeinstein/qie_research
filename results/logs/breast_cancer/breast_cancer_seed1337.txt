@@ -1,0 +1,56 @@
+2026-04-27 12:55:35 UTC | INFO     | ======================================================================
+2026-04-27 12:55:35 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 12:55:35 UTC | INFO     | ======================================================================
+2026-04-27 12:55:35 UTC | INFO     | config     : configs/breast_cancer.yaml
+2026-04-27 12:55:35 UTC | INFO     | run name   : breast_cancer
+2026-04-27 12:55:35 UTC | INFO     | seed       : 1337  (overridden via CLI)
+2026-04-27 12:55:35 UTC | INFO     | torch_only : False
+2026-04-27 12:55:35 UTC | INFO     | python     : 3.11.10
+2026-04-27 12:55:35 UTC | INFO     | started    : 2026-04-27T12:55:35.866578+00:00
+2026-04-27 12:55:35 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:35 UTC | INFO     | [DATASET] loading 'breast_cancer' ...
+2026-04-27 12:55:35 UTC | INFO     | [DATASET] loaded  shape=(569, 30)  classes=[0, 1]  elapsed=0.003s
+2026-04-27 12:55:35 UTC | INFO     | [DATASET] split    n_train=455  n_test=114  n_features=30  n_classes=2  test_size=0.2
+2026-04-27 12:55:35 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:35 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 12:55:35 UTC | INFO     | [ENCODING] amplitude  done  d_in=30  d_out=32  time=0.0004s  peak_mem=333.1KB
+2026-04-27 12:55:35 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 12:55:35 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.798246  f1_macro=0.742613  time=0.0039s  peak_mem=64.1KB
+2026-04-27 12:55:35 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 12:55:36 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.631579  f1_macro=0.387097  time=0.2241s
+2026-04-27 12:55:36 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 12:55:36 UTC | INFO     | [ENCODING] angle  done  d_in=30  d_out=60  time=0.0006s  peak_mem=749.5KB
+2026-04-27 12:55:36 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 12:55:36 UTC | INFO     | [SKLEARN]  angle  accuracy=1.000000  f1_macro=1.000000  time=0.0058s  peak_mem=62.1KB
+2026-04-27 12:55:36 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 12:55:36 UTC | INFO     | [TORCH]    angle  done  accuracy=0.964912  f1_macro=0.961486  time=0.0705s
+2026-04-27 12:55:36 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 12:55:36 UTC | INFO     | [ENCODING] basis  done  d_in=30  d_out=240  time=0.0007s  peak_mem=1122.1KB
+2026-04-27 12:55:36 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 12:55:36 UTC | INFO     | [SKLEARN]  basis  accuracy=0.938596  f1_macro=0.932981  time=0.0091s  peak_mem=971.2KB
+2026-04-27 12:55:36 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 12:55:36 UTC | INFO     | [TORCH]    basis  done  accuracy=0.912281  f1_macro=0.902564  time=0.0862s
+2026-04-27 12:55:36 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:36 UTC | INFO     | [BUDGET]   QIE d_outs=[32, 60, 240]  n_components_auto (median)=60
+2026-04-27 12:55:36 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.991228  f1_macro=0.990528  d_feat=30  time=0.0058s
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] rff  done  accuracy=0.947368  f1_macro=0.942230  d_feat=60  time=0.0088s
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] poly2  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] poly2  done  accuracy=0.991228  f1_macro=0.990621  d_feat=495  time=0.0212s
+2026-04-27 12:55:36 UTC | INFO     | [BASELINE] poly3  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 12:55:47 UTC | INFO     | [BASELINE] poly3  done  accuracy=0.973684  f1_macro=0.972120  d_feat=5455  time=11.1321s
+2026-04-27 12:55:47 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 12:55:48 UTC | INFO     | [BASELINE] pca  done  accuracy=0.947368  f1_macro=0.943452  d_feat=29  time=0.1391s
+2026-04-27 12:55:48 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=None
+2026-04-27 12:55:48 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.982456  f1_macro=0.981151  d_feat=30  time=0.0048s
+2026-04-27 12:55:48 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 12:55:51 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.973684  f1_macro=0.971583  d_feat=30  time=3.2702s
+2026-04-27 12:55:51 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 12:55:51 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.982456  f1_macro=0.981151  d_feat=30  time=0.2011s
+2026-04-27 12:55:51 UTC | INFO     | ======================================================================
+2026-04-27 12:55:51 UTC | INFO     | RUN COMPLETE  total_time=16.36s  (0.3min)
+2026-04-27 12:55:51 UTC | INFO     | results -> results/metrics/breast_cancer/breast_cancer_seed1337.json
+2026-04-27 12:55:51 UTC | INFO     | log     -> results/logs/breast_cancer/breast_cancer_seed1337.txt
+2026-04-27 12:55:51 UTC | INFO     | ======================================================================

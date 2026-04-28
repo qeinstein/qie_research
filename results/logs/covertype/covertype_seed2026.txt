@@ -1,0 +1,64 @@
+2026-04-27 23:02:45 UTC | INFO     | ======================================================================
+2026-04-27 23:02:45 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 23:02:45 UTC | INFO     | ======================================================================
+2026-04-27 23:02:45 UTC | INFO     | config     : configs/covertype.yaml
+2026-04-27 23:02:45 UTC | INFO     | run name   : covertype
+2026-04-27 23:02:45 UTC | INFO     | seed       : 2026  (overridden via CLI)
+2026-04-27 23:02:45 UTC | INFO     | torch_only : False
+2026-04-27 23:02:45 UTC | INFO     | python     : 3.11.10
+2026-04-27 23:02:45 UTC | INFO     | started    : 2026-04-27T23:02:45.008970+00:00
+2026-04-27 23:02:45 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 23:02:45 UTC | INFO     | [DATASET] loading 'covertype' ...
+2026-04-27 23:02:45 UTC | INFO     | [DATASET] loaded  shape=(50000, 54)  classes=[0, 1, 2, 3, 4, 5, 6]  elapsed=0.581s
+2026-04-27 23:02:45 UTC | INFO     | [DATASET] split    n_train=40000  n_test=10000  n_features=54  n_classes=7  test_size=0.2
+2026-04-27 23:02:45 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 23:02:45 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 23:02:45 UTC | INFO     | [ENCODING] amplitude  done  d_in=54  d_out=64  time=0.0115s  peak_mem=54064.9KB
+2026-04-27 23:02:45 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 23:02:59 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.586000  f1_macro=0.209446  time=13.7494s  peak_mem=5180.3KB
+2026-04-27 23:02:59 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 23:03:04 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.5217  f1_macro=0.169685  time=4.7310s
+2026-04-27 23:03:04 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 23:03:04 UTC | INFO     | [ENCODING] angle  done  d_in=54  d_out=108  time=0.0628s  peak_mem=118127.4KB
+2026-04-27 23:03:04 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 23:03:48 UTC | INFO     | [SKLEARN]  angle  accuracy=0.728500  f1_macro=0.539655  time=43.9403s  peak_mem=5256.9KB
+2026-04-27 23:03:48 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 23:03:53 UTC | INFO     | [TORCH]    angle  done  accuracy=0.7249  f1_macro=0.496275  time=4.8847s
+2026-04-27 23:03:53 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 23:03:53 UTC | INFO     | [ENCODING] basis  done  d_in=54  d_out=432  time=0.0499s  peak_mem=177190.5KB
+2026-04-27 23:03:53 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 23:04:39 UTC | INFO     | [SKLEARN]  basis  accuracy=0.731700  f1_macro=0.541951  time=46.2620s  peak_mem=140905.4KB
+2026-04-27 23:04:39 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 23:04:45 UTC | INFO     | [TORCH]    basis  done  accuracy=0.7152  f1_macro=0.500492  time=5.1467s
+2026-04-27 23:04:45 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 23:04:45 UTC | INFO     | [BUDGET]   QIE d_outs=[64, 108, 432]  n_components_auto (median)=108
+2026-04-27 23:04:45 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 23:04:45 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 23:05:00 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.723900  f1_macro=0.519276  d_feat=54  time=15.4167s
+2026-04-27 23:05:00 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 23:05:10 UTC | INFO     | [BASELINE] rff  done  accuracy=0.708500  f1_macro=0.505484  d_feat=108  time=9.7069s
+2026-04-27 23:05:10 UTC | INFO     | [BASELINE] poly2  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 23:27:11 UTC | INFO     | [BASELINE] poly2  done  accuracy=0.769800  f1_macro=0.652250  d_feat=1539  time=1321.6992s
+2026-04-27 23:27:11 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 23:28:23 UTC | WARNING  | /usr/local/lib/python3.11/dist-packages/sklearn/linear_model/_logistic.py:406: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+2026-04-27 23:28:23 UTC | INFO     | [BASELINE] pca  done  accuracy=0.670200  f1_macro=0.310973  d_feat=53  time=71.6875s
+2026-04-27 23:28:23 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=20000
+2026-04-27 23:28:32 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.749900  f1_macro=0.502471  d_feat=54  time=9.2452s
+2026-04-27 23:28:32 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 23:43:16 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.866800  f1_macro=0.787440  d_feat=54  time=884.0432s
+2026-04-27 23:43:16 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 23:43:25 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.858100  f1_macro=0.781489  d_feat=54  time=8.2519s
+2026-04-27 23:43:25 UTC | INFO     | ======================================================================
+2026-04-27 23:43:25 UTC | INFO     | RUN COMPLETE  total_time=2440.84s  (40.7min)
+2026-04-27 23:43:25 UTC | INFO     | results -> results/metrics/covertype/covertype_seed2026.json
+2026-04-27 23:43:25 UTC | INFO     | log     -> results/logs/covertype/covertype_seed2026.txt
+2026-04-27 23:43:25 UTC | INFO     | ======================================================================

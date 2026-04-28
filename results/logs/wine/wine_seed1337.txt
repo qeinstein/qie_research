@@ -1,0 +1,56 @@
+2026-04-27 12:55:09 UTC | INFO     | ======================================================================
+2026-04-27 12:55:09 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 12:55:09 UTC | INFO     | ======================================================================
+2026-04-27 12:55:09 UTC | INFO     | config     : configs/wine.yaml
+2026-04-27 12:55:09 UTC | INFO     | run name   : wine
+2026-04-27 12:55:09 UTC | INFO     | seed       : 1337  (overridden via CLI)
+2026-04-27 12:55:09 UTC | INFO     | torch_only : False
+2026-04-27 12:55:09 UTC | INFO     | python     : 3.11.10
+2026-04-27 12:55:09 UTC | INFO     | started    : 2026-04-27T12:55:09.468196+00:00
+2026-04-27 12:55:09 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:09 UTC | INFO     | [DATASET] loading 'wine' ...
+2026-04-27 12:55:09 UTC | INFO     | [DATASET] loaded  shape=(178, 13)  classes=[0, 1, 2]  elapsed=0.001s
+2026-04-27 12:55:09 UTC | INFO     | [DATASET] split    n_train=142  n_test=36  n_features=13  n_classes=3  test_size=0.2
+2026-04-27 12:55:09 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:09 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 12:55:09 UTC | INFO     | [ENCODING] amplitude  done  d_in=13  d_out=16  time=0.0003s  peak_mem=50.2KB
+2026-04-27 12:55:09 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 12:55:09 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.583333  f1_macro=0.462668  time=0.0057s  peak_mem=69.8KB
+2026-04-27 12:55:09 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 12:55:10 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.388889  f1_macro=0.186667  time=0.1920s
+2026-04-27 12:55:10 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 12:55:10 UTC | INFO     | [ENCODING] angle  done  d_in=13  d_out=26  time=0.0002s  peak_mem=103.6KB
+2026-04-27 12:55:10 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 12:55:10 UTC | INFO     | [SKLEARN]  angle  accuracy=0.972222  f1_macro=0.974013  time=0.0063s  peak_mem=67.6KB
+2026-04-27 12:55:10 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 12:55:10 UTC | INFO     | [TORCH]    angle  done  accuracy=0.916667  f1_macro=0.920196  time=0.0367s
+2026-04-27 12:55:10 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 12:55:10 UTC | INFO     | [ENCODING] basis  done  d_in=13  d_out=104  time=0.0002s  peak_mem=160.5KB
+2026-04-27 12:55:10 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 12:55:10 UTC | INFO     | [SKLEARN]  basis  accuracy=0.888889  f1_macro=0.890993  time=0.0067s  peak_mem=256.7KB
+2026-04-27 12:55:10 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 12:55:10 UTC | INFO     | [TORCH]    basis  done  accuracy=0.805556  f1_macro=0.79085  time=0.0558s
+2026-04-27 12:55:10 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:10 UTC | INFO     | [BUDGET]   QIE d_outs=[16, 26, 104]  n_components_auto (median)=26
+2026-04-27 12:55:10 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.972222  f1_macro=0.970962  d_feat=13  time=0.0049s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] rff  done  accuracy=0.861111  f1_macro=0.869429  d_feat=26  time=0.0064s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] poly2  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] poly2  done  accuracy=0.972222  f1_macro=0.970962  d_feat=104  time=0.0082s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] poly3  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] poly3  done  accuracy=0.944444  f1_macro=0.940741  d_feat=559  time=0.0142s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] pca  done  accuracy=0.916667  f1_macro=0.916212  d_feat=12  time=0.0948s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.944444  f1_macro=0.945741  d_feat=13  time=0.0033s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.972222  f1_macro=0.974013  d_feat=13  time=0.2614s
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 12:55:10 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.972222  f1_macro=0.970962  d_feat=13  time=0.1466s
+2026-04-27 12:55:10 UTC | INFO     | ======================================================================
+2026-04-27 12:55:10 UTC | INFO     | RUN COMPLETE  total_time=2.00s  (0.0min)
+2026-04-27 12:55:10 UTC | INFO     | results -> results/metrics/wine/wine_seed1337.json
+2026-04-27 12:55:10 UTC | INFO     | log     -> results/logs/wine/wine_seed1337.txt
+2026-04-27 12:55:10 UTC | INFO     | ======================================================================

@@ -1,0 +1,72 @@
+2026-04-27 15:15:27 UTC | INFO     | ======================================================================
+2026-04-27 15:15:27 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 15:15:27 UTC | INFO     | ======================================================================
+2026-04-27 15:15:27 UTC | INFO     | config     : configs/cifar10.yaml
+2026-04-27 15:15:27 UTC | INFO     | run name   : cifar10
+2026-04-27 15:15:27 UTC | INFO     | seed       : 1337  (overridden via CLI)
+2026-04-27 15:15:27 UTC | INFO     | torch_only : False
+2026-04-27 15:15:27 UTC | INFO     | python     : 3.11.10
+2026-04-27 15:15:27 UTC | INFO     | started    : 2026-04-27T15:15:27.685453+00:00
+2026-04-27 15:15:27 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 15:15:27 UTC | INFO     | [DATASET] loading 'cifar10' ...
+2026-04-27 15:15:44 UTC | INFO     | [DATASET] loaded  shape=(10000, 3072)  classes=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  elapsed=16.378s
+2026-04-27 15:15:44 UTC | INFO     | [DATASET] split    n_train=8000  n_test=2000  n_features=3072  n_classes=10  test_size=0.2
+2026-04-27 15:15:44 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 15:15:44 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 15:15:44 UTC | INFO     | [ENCODING] amplitude  done  d_in=3072  d_out=4096  time=0.1120s  peak_mem=640065.0KB
+2026-04-27 15:15:44 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 15:16:22 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.362500  f1_macro=0.352707  time=38.7769s  peak_mem=14234.8KB
+2026-04-27 15:16:22 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 15:16:24 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.3535  f1_macro=0.343637  time=1.1201s
+2026-04-27 15:16:24 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 15:16:31 UTC | INFO     | [ENCODING] angle  done  d_in=3072  d_out=6144  time=6.5325s  peak_mem=1344050.6KB
+2026-04-27 15:16:31 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 15:22:58 UTC | WARNING  | /usr/local/lib/python3.11/dist-packages/sklearn/linear_model/_logistic.py:406: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+2026-04-27 15:22:58 UTC | INFO     | [SKLEARN]  angle  accuracy=0.297000  f1_macro=0.297869  time=386.9808s  peak_mem=20559.2KB
+2026-04-27 15:22:58 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 15:22:59 UTC | INFO     | [TORCH]    angle  done  accuracy=0.336  f1_macro=0.327241  time=1.0778s
+2026-04-27 15:22:59 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 15:23:24 UTC | INFO     | [ENCODING] basis  done  d_in=3072  d_out=24576  time=25.1088s  peak_mem=2016073.8KB
+2026-04-27 15:23:24 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 15:24:30 UTC | INFO     | [SKLEARN]  basis  accuracy=0.321000  f1_macro=0.320212  time=65.8484s  peak_mem=1614145.4KB
+2026-04-27 15:24:30 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 15:24:31 UTC | INFO     | [TORCH]    basis  done  accuracy=0.3175  f1_macro=0.31392  time=1.0345s
+2026-04-27 15:24:31 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 15:24:31 UTC | INFO     | [BUDGET]   QIE d_outs=[4096, 6144, 24576]  n_components_auto (median)=6144
+2026-04-27 15:24:31 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 15:24:31 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 15:30:44 UTC | WARNING  | /usr/local/lib/python3.11/dist-packages/sklearn/linear_model/_logistic.py:406: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+2026-04-27 15:30:44 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.280000  f1_macro=0.280875  d_feat=3072  time=373.2140s
+2026-04-27 15:30:44 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 15:30:49 UTC | INFO     | [BASELINE] rff  done  accuracy=0.370500  f1_macro=0.364511  d_feat=256  time=4.6025s
+2026-04-27 15:30:49 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 15:31:05 UTC | INFO     | [BASELINE] pca  done  accuracy=0.352500  f1_macro=0.348598  d_feat=256  time=16.0912s
+2026-04-27 15:31:05 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=10000
+2026-04-27 15:32:17 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.453000  f1_macro=0.450105  d_feat=3072  time=71.9377s
+2026-04-27 15:32:17 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 15:32:54 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.417000  f1_macro=0.416982  d_feat=3072  time=36.5610s
+2026-04-27 15:32:54 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 15:32:56 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.448500  f1_macro=0.450047  d_feat=3072  time=1.7617s
+2026-04-27 15:32:56 UTC | INFO     | ======================================================================
+2026-04-27 15:32:56 UTC | INFO     | RUN COMPLETE  total_time=1049.09s  (17.5min)
+2026-04-27 15:32:56 UTC | INFO     | results -> results/metrics/cifar10/cifar10_seed1337.json
+2026-04-27 15:32:56 UTC | INFO     | log     -> results/logs/cifar10/cifar10_seed1337.txt
+2026-04-27 15:32:56 UTC | INFO     | ======================================================================

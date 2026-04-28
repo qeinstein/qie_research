@@ -1,0 +1,54 @@
+2026-04-28 00:49:45 UTC | INFO     | ======================================================================
+2026-04-28 00:49:45 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-28 00:49:45 UTC | INFO     | ======================================================================
+2026-04-28 00:49:45 UTC | INFO     | config     : configs/credit_card_fraud.yaml
+2026-04-28 00:49:45 UTC | INFO     | run name   : credit_card_fraud
+2026-04-28 00:49:45 UTC | INFO     | seed       : 42  (overridden via CLI)
+2026-04-28 00:49:45 UTC | INFO     | torch_only : False
+2026-04-28 00:49:45 UTC | INFO     | python     : 3.11.10
+2026-04-28 00:49:45 UTC | INFO     | started    : 2026-04-28T00:49:45.219959+00:00
+2026-04-28 00:49:45 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:49:45 UTC | INFO     | [DATASET] loading 'credit_card_fraud' ...
+2026-04-28 00:49:45 UTC | INFO     | [DATASET] loaded  shape=(284807, 29)  classes=[0, 1]  elapsed=0.026s
+2026-04-28 00:49:45 UTC | INFO     | [DATASET] split    n_train=227845  n_test=56962  n_features=29  n_classes=2  test_size=0.2
+2026-04-28 00:49:45 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:49:45 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-28 00:49:45 UTC | INFO     | [ENCODING] amplitude  done  d_in=29  d_out=32  time=0.0430s  peak_mem=161986.0KB
+2026-04-28 00:49:45 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-28 00:49:46 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.998754  f1_macro=0.747915  time=0.9778s  peak_mem=7392.8KB
+2026-04-28 00:49:46 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-28 00:50:14 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.998683  f1_macro=0.704395  time=27.1307s
+2026-04-28 00:50:14 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-28 00:50:14 UTC | INFO     | [ENCODING] angle  done  d_in=29  d_out=58  time=0.5290s  peak_mem=361350.9KB
+2026-04-28 00:50:14 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-28 00:50:15 UTC | INFO     | [SKLEARN]  angle  accuracy=0.999087  f1_macro=0.848609  time=1.0440s  peak_mem=7395.7KB
+2026-04-28 00:50:15 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-28 00:50:44 UTC | INFO     | [TORCH]    angle  done  accuracy=0.998999  f1_macro=0.827022  time=28.5400s
+2026-04-28 00:50:44 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-28 00:50:45 UTC | INFO     | [ENCODING] basis  done  d_in=29  d_out=232  time=1.0465s  peak_mem=542024.2KB
+2026-04-28 00:50:45 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-28 00:50:49 UTC | INFO     | [SKLEARN]  basis  accuracy=0.999210  f1_macro=0.868223  time=4.1903s  peak_mem=420407.3KB
+2026-04-28 00:50:49 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-28 00:51:17 UTC | INFO     | [TORCH]    basis  done  accuracy=0.99928  f1_macro=0.882677  time=27.7161s
+2026-04-28 00:51:17 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:51:17 UTC | INFO     | [BUDGET]   QIE d_outs=[32, 58, 232]  n_components_auto (median)=58
+2026-04-28 00:51:17 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-28 00:51:17 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-28 00:51:19 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.999157  f1_macro=0.861858  d_feat=29  time=2.3303s
+2026-04-28 00:51:19 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-28 00:51:21 UTC | INFO     | [BASELINE] rff  done  accuracy=0.998297  f1_macro=0.509675  d_feat=58  time=1.5063s
+2026-04-28 00:51:21 UTC | INFO     | [BASELINE] poly2  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-28 00:51:57 UTC | INFO     | [BASELINE] poly2  done  accuracy=0.999403  f1_macro=0.911309  d_feat=464  time=36.1863s
+2026-04-28 00:51:57 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-28 00:52:26 UTC | INFO     | [BASELINE] pca  done  accuracy=0.999140  f1_macro=0.858166  d_feat=28  time=28.8680s
+2026-04-28 00:52:26 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=20000
+2026-04-28 00:52:27 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.998701  f1_macro=0.710612  d_feat=29  time=1.5767s
+2026-04-28 00:52:27 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-28 00:58:06 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.999438  f1_macro=0.912903  d_feat=29  time=338.8242s
+2026-04-28 00:58:06 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-28 00:58:51 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.999421  f1_macro=0.912553  d_feat=29  time=44.4031s
+2026-04-28 00:58:51 UTC | INFO     | ======================================================================
+2026-04-28 00:58:51 UTC | INFO     | RUN COMPLETE  total_time=546.73s  (9.1min)
+2026-04-28 00:58:51 UTC | INFO     | results -> results/metrics/credit_card_fraud/credit_card_fraud_seed42.json
+2026-04-28 00:58:51 UTC | INFO     | log     -> results/logs/credit_card_fraud/credit_card_fraud_seed42.txt
+2026-04-28 00:58:51 UTC | INFO     | ======================================================================

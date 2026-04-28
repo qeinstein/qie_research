@@ -1,0 +1,52 @@
+2026-04-27 14:23:01 UTC | INFO     | ======================================================================
+2026-04-27 14:23:01 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 14:23:01 UTC | INFO     | ======================================================================
+2026-04-27 14:23:01 UTC | INFO     | config     : configs/fashion_mnist.yaml
+2026-04-27 14:23:01 UTC | INFO     | run name   : fashion_mnist
+2026-04-27 14:23:01 UTC | INFO     | seed       : 99  (overridden via CLI)
+2026-04-27 14:23:01 UTC | INFO     | torch_only : False
+2026-04-27 14:23:01 UTC | INFO     | python     : 3.11.10
+2026-04-27 14:23:01 UTC | INFO     | started    : 2026-04-27T14:23:01.975192+00:00
+2026-04-27 14:23:01 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 14:23:01 UTC | INFO     | [DATASET] loading 'fashion_mnist' ...
+2026-04-27 14:23:02 UTC | INFO     | [DATASET] loaded  shape=(10000, 784)  classes=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  elapsed=0.070s
+2026-04-27 14:23:02 UTC | INFO     | [DATASET] split    n_train=8000  n_test=2000  n_features=784  n_classes=10  test_size=0.2
+2026-04-27 14:23:02 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 14:23:02 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 14:23:02 UTC | INFO     | [ENCODING] amplitude  done  d_in=784  d_out=1024  time=0.0316s  peak_mem=162064.9KB
+2026-04-27 14:23:02 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 14:24:24 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.823000  f1_macro=0.819849  time=82.5983s  peak_mem=4712.0KB
+2026-04-27 14:24:24 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 14:24:26 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.809  f1_macro=0.804677  time=1.2554s
+2026-04-27 14:24:26 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 14:24:26 UTC | INFO     | [ENCODING] angle  done  d_in=784  d_out=1568  time=0.1750s  peak_mem=343014.9KB
+2026-04-27 14:24:26 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 14:33:53 UTC | INFO     | [SKLEARN]  angle  accuracy=0.826500  f1_macro=0.826727  time=566.8571s  peak_mem=6439.8KB
+2026-04-27 14:33:53 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 14:33:54 UTC | INFO     | [TORCH]    angle  done  accuracy=0.845  f1_macro=0.845223  time=1.0007s
+2026-04-27 14:33:54 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 14:33:54 UTC | INFO     | [ENCODING] basis  done  d_in=784  d_out=6272  time=0.1530s  peak_mem=514520.1KB
+2026-04-27 14:33:54 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 14:36:02 UTC | INFO     | [SKLEARN]  basis  accuracy=0.824500  f1_macro=0.823488  time=127.5106s  peak_mem=412944.5KB
+2026-04-27 14:36:02 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 14:36:03 UTC | INFO     | [TORCH]    basis  done  accuracy=0.83  f1_macro=0.829158  time=1.1318s
+2026-04-27 14:36:03 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 14:36:03 UTC | INFO     | [BUDGET]   QIE d_outs=[1024, 1568, 6272]  n_components_auto (median)=1568
+2026-04-27 14:36:03 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 14:36:03 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 14:40:31 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.809000  f1_macro=0.808241  d_feat=784  time=268.2995s
+2026-04-27 14:40:31 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 14:40:36 UTC | INFO     | [BASELINE] rff  done  accuracy=0.805000  f1_macro=0.801721  d_feat=256  time=4.7981s
+2026-04-27 14:40:36 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 14:41:02 UTC | INFO     | [BASELINE] pca  done  accuracy=0.830500  f1_macro=0.829622  d_feat=256  time=26.0051s
+2026-04-27 14:41:02 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=10000
+2026-04-27 14:41:06 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.850500  f1_macro=0.846973  d_feat=784  time=3.5555s
+2026-04-27 14:41:06 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 14:41:43 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.851000  f1_macro=0.848426  d_feat=784  time=37.7355s
+2026-04-27 14:41:43 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 14:41:45 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.863000  f1_macro=0.862655  d_feat=784  time=1.7070s
+2026-04-27 14:41:45 UTC | INFO     | ======================================================================
+2026-04-27 14:41:45 UTC | INFO     | RUN COMPLETE  total_time=1124.39s  (18.7min)
+2026-04-27 14:41:45 UTC | INFO     | results -> results/metrics/fashion_mnist/fashion_mnist_seed99.json
+2026-04-27 14:41:45 UTC | INFO     | log     -> results/logs/fashion_mnist/fashion_mnist_seed99.txt
+2026-04-27 14:41:45 UTC | INFO     | ======================================================================

@@ -1,0 +1,54 @@
+2026-04-27 16:48:44 UTC | INFO     | ======================================================================
+2026-04-27 16:48:44 UTC | INFO     | QIE BENCHMARK RUN
+2026-04-27 16:48:44 UTC | INFO     | ======================================================================
+2026-04-27 16:48:44 UTC | INFO     | config     : configs/higgs.yaml
+2026-04-27 16:48:44 UTC | INFO     | run name   : higgs
+2026-04-27 16:48:44 UTC | INFO     | seed       : 1337  (overridden via CLI)
+2026-04-27 16:48:44 UTC | INFO     | torch_only : False
+2026-04-27 16:48:44 UTC | INFO     | python     : 3.11.10
+2026-04-27 16:48:44 UTC | INFO     | started    : 2026-04-27T16:48:44.219371+00:00
+2026-04-27 16:48:44 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 16:48:44 UTC | INFO     | [DATASET] loading 'higgs' ...
+2026-04-27 16:48:44 UTC | INFO     | [DATASET] loaded  shape=(500000, 28)  classes=[0, 1]  elapsed=0.014s
+2026-04-27 16:48:44 UTC | INFO     | [DATASET] split    n_train=400000  n_test=100000  n_features=28  n_classes=2  test_size=0.2
+2026-04-27 16:48:44 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 16:48:44 UTC | INFO     | [ENCODING] amplitude  params={'pad_to_power_of_two': True}
+2026-04-27 16:48:44 UTC | INFO     | [ENCODING] amplitude  done  d_in=28  d_out=32  time=0.0658s  peak_mem=278127.5KB
+2026-04-27 16:48:44 UTC | INFO     | [SKLEARN]  amplitude  training logistic_regression ...
+2026-04-27 16:48:50 UTC | INFO     | [SKLEARN]  amplitude  accuracy=0.642920  f1_macro=0.637198  time=5.8743s  peak_mem=12950.6KB
+2026-04-27 16:48:50 UTC | INFO     | [TORCH]    amplitude  training linear head  epochs=100  lr=0.001
+2026-04-27 16:49:40 UTC | INFO     | [TORCH]    amplitude  done  accuracy=0.63395  f1_macro=0.624533  time=50.1221s
+2026-04-27 16:49:40 UTC | INFO     | [ENCODING] angle  params={'scale': 3.141592653589793, 'standardize': True}
+2026-04-27 16:49:41 UTC | INFO     | [ENCODING] angle  done  d_in=28  d_out=56  time=0.3318s  peak_mem=612503.0KB
+2026-04-27 16:49:41 UTC | INFO     | [SKLEARN]  angle  training logistic_regression ...
+2026-04-27 16:50:43 UTC | INFO     | [SKLEARN]  angle  accuracy=0.658390  f1_macro=0.650403  time=61.8239s  peak_mem=12948.0KB
+2026-04-27 16:50:43 UTC | INFO     | [TORCH]    angle  training linear head  epochs=100  lr=0.001
+2026-04-27 16:51:30 UTC | INFO     | [TORCH]    angle  done  accuracy=0.64615  f1_macro=0.639021  time=47.2964s
+2026-04-27 16:51:30 UTC | INFO     | [ENCODING] basis  params={'n_bits': 8}
+2026-04-27 16:51:31 UTC | INFO     | [ENCODING] basis  done  d_in=28  d_out=224  time=0.5548s  peak_mem=918752.3KB
+2026-04-27 16:51:31 UTC | INFO     | [SKLEARN]  basis  training logistic_regression ...
+2026-04-27 16:53:57 UTC | INFO     | [SKLEARN]  basis  accuracy=0.668360  f1_macro=0.664001  time=146.2109s  peak_mem=712987.9KB
+2026-04-27 16:53:57 UTC | INFO     | [TORCH]    basis  training linear head  epochs=100  lr=0.001
+2026-04-27 16:54:44 UTC | INFO     | [TORCH]    basis  done  accuracy=0.66492  f1_macro=0.663292  time=46.8137s
+2026-04-27 16:54:44 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 16:54:44 UTC | INFO     | [BUDGET]   QIE d_outs=[32, 56, 224]  n_components_auto (median)=56
+2026-04-27 16:54:44 UTC | INFO     | ----------------------------------------------------------------------
+2026-04-27 16:54:44 UTC | INFO     | [BASELINE] raw_linear  feature_map=scaler  model=logistic_regression  max_samples=None
+2026-04-27 16:54:45 UTC | INFO     | [BASELINE] raw_linear  done  accuracy=0.641810  f1_macro=0.634220  d_feat=28  time=1.6996s
+2026-04-27 16:54:45 UTC | INFO     | [BASELINE] rff  feature_map=rff  model=logistic_regression  max_samples=None
+2026-04-27 16:54:47 UTC | INFO     | [BASELINE] rff  done  accuracy=0.584700  f1_macro=0.571309  d_feat=56  time=1.8944s
+2026-04-27 16:54:47 UTC | INFO     | [BASELINE] poly2  feature_map=polynomial  model=logistic_regression  max_samples=None
+2026-04-27 16:58:22 UTC | INFO     | [BASELINE] poly2  done  accuracy=0.679110  f1_macro=0.673096  d_feat=434  time=214.8335s
+2026-04-27 16:58:22 UTC | INFO     | [BASELINE] pca  feature_map=pca  model=logistic_regression  max_samples=None
+2026-04-27 16:58:25 UTC | INFO     | [BASELINE] pca  done  accuracy=0.613250  f1_macro=0.605676  d_feat=27  time=2.2630s
+2026-04-27 16:58:25 UTC | INFO     | [BASELINE] rbf_svm  feature_map=none  model=rbf_svm  max_samples=20000
+2026-04-27 16:59:18 UTC | INFO     | [BASELINE] rbf_svm  done  accuracy=0.676700  f1_macro=0.670409  d_feat=28  time=53.8349s
+2026-04-27 16:59:18 UTC | INFO     | [BASELINE] mlp  feature_map=none  model=mlp  max_samples=None
+2026-04-27 17:02:58 UTC | INFO     | [BASELINE] mlp  done  accuracy=0.747230  f1_macro=0.745682  d_feat=28  time=219.2670s
+2026-04-27 17:02:58 UTC | INFO     | [BASELINE] torch_mlp  feature_map=none  model=torch_mlp  max_samples=None
+2026-04-27 17:04:20 UTC | INFO     | [BASELINE] torch_mlp  done  accuracy=0.746760  f1_macro=0.745948  d_feat=28  time=81.9341s
+2026-04-27 17:04:20 UTC | INFO     | ======================================================================
+2026-04-27 17:04:20 UTC | INFO     | RUN COMPLETE  total_time=936.96s  (15.6min)
+2026-04-27 17:04:20 UTC | INFO     | results -> results/metrics/higgs/higgs_seed1337.json
+2026-04-27 17:04:20 UTC | INFO     | log     -> results/logs/higgs/higgs_seed1337.txt
+2026-04-27 17:04:20 UTC | INFO     | ======================================================================

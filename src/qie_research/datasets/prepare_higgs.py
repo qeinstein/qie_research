@@ -94,8 +94,11 @@ def _load_gz_subset(gz_path: Path, n_subset: int, seed: int):
     class0_idx: list[int] = []
     class1_idx: list[int] = []
 
+    print("  Pass 1: Identifying class indices...")
     with gzip.open(gz_path, "rt") as fh:
         for i, line in enumerate(fh):
+            if i % 500000 == 0 and i > 0:
+                print(f"    Scanning row {i:,} ...")
             label = line[0]  # first character is '0' or '1'
             if label == "0":
                 class0_idx.append(i)
@@ -117,13 +120,16 @@ def _load_gz_subset(gz_path: Path, n_subset: int, seed: int):
     chosen = chosen0 | chosen1
 
     # --- Pass 2: read selected rows ---
-    print(f"  Extracting {n_subset:,} rows ({n_keep0:,} class-0, {n_keep1:,} class-1)...")
+    print(f"  Pass 2: Extracting {n_subset:,} rows...")
     X = np.empty((n_subset, N_COLS - 1), dtype=np.float32)
     y = np.empty(n_subset, dtype=np.int32)
 
     out_idx = 0
     with gzip.open(gz_path, "rt") as fh:
         for i, line in enumerate(fh):
+            if i % 1000000 == 0 and i > 0:
+                pct = (i / total) * 100
+                print(f"    Extracting: {pct:.0f}% complete ({i:,} rows scanned) ...")
             if i not in chosen:
                 continue
             vals = line.rstrip("\n").split(",")

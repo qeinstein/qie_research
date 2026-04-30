@@ -33,12 +33,14 @@ model:
   max_iter: 1000
   C: 1.0
 
-# Polynomial features omitted: 200 features → ~20k degree-2 features.
-# With 5k samples that's a 5k × 20k matrix — borderline on RAM, excluded for safety.
 baselines:
   - name: raw_linear
     feature_map: {name: scaler}
     model: {name: logistic_regression, max_iter: 1000, C: 1.0}
+
+  - name: poly2
+    feature_map: {name: polynomial, degree: 2}
+    model: {name: logistic_regression, max_iter: 2000, C: 1.0}
 
   - name: rff
     feature_map: {name: rff, n_components: auto, gamma: auto}

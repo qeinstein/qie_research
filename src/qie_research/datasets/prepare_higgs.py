@@ -62,63 +62,73 @@ def _download(url: str, dest: Path) -> None:
     print("\nDownload complete.")
 
 
+def _open_inner_text(z: zipfile.ZipFile, name: str) -> io.TextIOWrapper:
+    """Open a file inside a ZIP as a text stream, handling nested gzip transparently."""
+    import gzip
+    raw = z.open(name, "r")
+    if name.lower().endswith(".gz"):
+        return io.TextIOWrapper(gzip.GzipFile(fileobj=raw), encoding="utf-8")
+    return io.TextIOWrapper(raw, encoding="utf-8")
+
+
 def _load_zip_subset(zip_path: Path, n_subset: int, seed: int):
-    """Stream the CSV inside the ZIP and return a stratified subset."""
+    """Stream the CSV (or CSV.gz) inside the ZIP and return a stratified subset."""
     print(f"Reading {zip_path} ...")
-    
+
     with zipfile.ZipFile(zip_path, "r") as z:
-        # The zip contains HIGGS.csv
-        csv_name = "HIGGS.csv"
-        if csv_name not in z.namelist():
-            # Find the largest file if the name is different
-            csv_name = sorted(z.filelist, key=lambda x: x.file_size, reverse=True)[0].filename
-            
-        print(f"  Streaming {csv_name} from ZIP to build stratified subset...")
+        names = z.namelist()
+        # Prefer plain CSV; fall back to .csv.gz; otherwise take the largest file
+        inner = (
+            next((n for n in names if n.lower().endswith(".csv")), None)
+            or next((n for n in names if n.lower().endswith(".csv.gz")), None)
+            or sorted(z.filelist, key=lambda x: x.file_size, reverse=True)[0].filename
+        )
+        is_gz = inner.lower().endswith(".gz")
+        print(f"  Streaming {inner} ({'gzip inside ZIP' if is_gz else 'plain CSV'})...")
+
         rng = np.random.default_rng(seed)
 
-        # --- Pass 1: count rows per class ---
+        # --- Pass 1: identify row indices per class ---
         class0_idx: list[int] = []
         class1_idx: list[int] = []
 
         print("  Pass 1: Identifying class indices...")
-        with z.open(csv_name, "r") as fh:
-            # We wrap in TextIOWrapper to read as strings
-            import io
-            text_fh = io.TextIOWrapper(fh)
-            for i, line in enumerate(text_fh):
-                if i % 500000 == 0 and i > 0:
+        with z.open(inner, "r") as raw:
+            fh = io.TextIOWrapper(
+                __import__("gzip").GzipFile(fileobj=raw) if is_gz else raw,
+                encoding="utf-8",
+            )
+            for i, line in enumerate(fh):
+                if i % 500_000 == 0 and i > 0:
                     print(f"    Scanning row {i:,} ...")
-                label = line[0]
-                if label == "0":
-                    class0_idx.append(i)
-                else:
-                    class1_idx.append(i)
+                (class0_idx if line[0] == "0" else class1_idx).append(i)
 
-        n0 = len(class0_idx)
-        n1 = len(class1_idx)
+        n0, n1 = len(class0_idx), len(class1_idx)
         total = n0 + n1
         print(f"  Total rows: {total:,}  (class 0: {n0:,}, class 1: {n1:,})")
 
         frac = n_subset / total
         n_keep0 = round(frac * n0)
         n_keep1 = n_subset - n_keep0
+        chosen = (
+            set(rng.choice(class0_idx, size=n_keep0, replace=False).tolist())
+            | set(rng.choice(class1_idx, size=n_keep1, replace=False).tolist())
+        )
 
-        chosen0 = set(rng.choice(class0_idx, size=n_keep0, replace=False).tolist())
-        chosen1 = set(rng.choice(class1_idx, size=n_keep1, replace=False).tolist())
-        chosen = chosen0 | chosen1
-
-        # --- Pass 2: read selected rows ---
+        # --- Pass 2: extract selected rows ---
         print(f"  Pass 2: Extracting {n_subset:,} rows...")
         X = np.empty((n_subset, N_COLS - 1), dtype=np.float32)
         y = np.empty(n_subset, dtype=np.int32)
-
         out_idx = 0
-        with z.open(csv_name, "r") as fh:
-            text_fh = io.TextIOWrapper(fh)
-            for i, line in enumerate(text_fh):
-                if i % 1000000 == 0 and i > 0:
-                    pct = (i / total) * 100
-                    print(f"    Extracting: {pct:.0f}% complete ({i:,} rows scanned) ...")
+
+        with z.open(inner, "r") as raw:
+            fh = io.TextIOWrapper(
+                __import__("gzip").GzipFile(fileobj=raw) if is_gz else raw,
+                encoding="utf-8",
+            )
+            for i, line in enumerate(fh):
+                if i % 1_000_000 == 0 and i > 0:
+                    print(f"    Extracting: {i/total*100:.0f}% ({i:,} rows scanned) ...")
                 if i not in chosen:
                     continue
                 vals = line.rstrip("\n").split(",")
@@ -128,8 +138,7 @@ def _load_zip_subset(zip_path: Path, n_subset: int, seed: int):
                 if out_idx >= n_subset:
                     break
 
-        perm = rng.permutation(n_subset)
-        return X[perm], y[perm]
+        return X[rng.permutation(n_subset)], y[rng.permutation(n_subset)]
 
 
 def prepare(
@@ -148,18 +157,11 @@ def prepare(
     if not raw_zip.exists():
         _download(HIGGS_URL, raw_zip)
 
-    try:
-        X, y = _load_zip_subset(raw_zip, n_subset=n_subset, seed=seed)
-        cache_x.parent.mkdir(parents=True, exist_ok=True)
-        np.save(cache_x, X)
-        np.save(cache_y, y)
-        print(f"Done. Saved to {cache_x}")
-    except Exception as e:
-        print(f"Error processing ZIP: {e}")
-        if raw_zip.exists():
-            print("The ZIP file might be corrupted. Deleting and trying again next time.")
-            raw_zip.unlink()
-        raise e
+    X, y = _load_zip_subset(raw_zip, n_subset=n_subset, seed=seed)
+    cache_x.parent.mkdir(parents=True, exist_ok=True)
+    np.save(cache_x, X)
+    np.save(cache_y, y)
+    print(f"Done. Saved to {cache_x}")
 
 
 if __name__ == "__main__":

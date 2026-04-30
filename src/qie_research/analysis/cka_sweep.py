@@ -13,6 +13,7 @@ Output:
 
 import argparse
 import csv
+import importlib
 import sys
 import yaml
 import numpy as np
@@ -34,6 +35,16 @@ _DATASETS = [
     "fashion_mnist", "cifar10", "higgs", "high_dim_parity",
     "high_rank_noise", "covertype",
 ]
+
+# Map datasets to their preparation modules
+_PREPARE_MAP = {
+    "dry_bean": "qie_research.datasets.prepare_dry_bean",
+    "credit_card_fraud": "qie_research.datasets.prepare_credit_card_fraud",
+    "cifar10": "qie_research.datasets.prepare_cifar10",
+    "fashion_mnist": "qie_research.datasets.prepare_fashion_mnist",
+    "covertype": "qie_research.datasets.prepare_covertype",
+    "higgs": "qie_research.datasets.prepare_higgs",
+}
 
 # Dense poly2 feature matrix exceeds RAM for these datasets (see benchmark_execution_plan.md)
 _NO_POLY2 = {"cifar10", "fashion_mnist"}
@@ -135,7 +146,22 @@ def run_sweep(stats_path: Path, configs_dir: Path, out_path: Path) -> None:
             config = yaml.safe_load(f)
 
         ds_params = config["dataset"]
-        X, y = DATASET_REGISTRY[dataset](ds_params)
+        try:
+            X, y = DATASET_REGISTRY[dataset](ds_params)
+        except (FileNotFoundError, ValueError, KeyError):
+            if dataset in _PREPARE_MAP:
+                print(f"  Dataset '{dataset}' not found or incomplete. Attempting to prepare...")
+                try:
+                    prep_mod = importlib.import_module(_PREPARE_MAP[dataset])
+                    prep_mod.prepare()
+                    X, y = DATASET_REGISTRY[dataset](ds_params)
+                except Exception as e:
+                    print(f"  FAILED to prepare '{dataset}': {e}")
+                    print(f"  Skipping '{dataset}' for CKA analysis.")
+                    continue
+            else:
+                print(f"  Dataset '{dataset}' could not be loaded and has no preparation script.")
+                continue
 
         test_size = ds_params.get("test_size", 0.2)
         try:

@@ -61,10 +61,11 @@ def prepare(
         X = X.reshape(len(X), -1)                                  # (70000, 784)
 
     except ImportError:
-        raise ImportError(
-            "torchvision is required to download Fashion-MNIST.\n"
-            "Install it with:  pip install torchvision"
-        )
+        print("torchvision not found. Fetching Fashion-MNIST from OpenML instead...")
+        from sklearn.datasets import fetch_openml
+        dataset = fetch_openml(data_id=40996, as_frame=False, parser="auto")
+        X = dataset.data.astype(np.float32) / 255.0
+        y = dataset.target.astype(np.int32)
 
     cache_x.parent.mkdir(parents=True, exist_ok=True)
     np.save(cache_x, X)

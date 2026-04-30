@@ -8,8 +8,11 @@ echo "=== [1/3] Installing Python dependencies ==="
 pip install --upgrade pip
 pip install -r requirements-runpod.txt
 
-echo "=== [2/3] Installing qie_research package ==="
+echo "=== [2/3] Installing qie_research package ===
 pip install -e .
+export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+echo \"export PYTHONPATH=\$PYTHONPATH:$(pwd)/src\" >> ~/.bashrc
+
 
 echo "=== [3/3] Verifying environment ==="
 python3 -c "

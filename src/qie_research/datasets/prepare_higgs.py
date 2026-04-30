@@ -64,10 +64,25 @@ N_COLS = 29  # col 0 = label, cols 1-28 = features
 
 
 def _download(url: str, dest: Path) -> None:
+    import shutil
+    import subprocess
+
     dest.parent.mkdir(parents=True, exist_ok=True)
     print(f"Connecting to {url} ...")
-    
-    # Use a real User-Agent to avoid being blocked by academic servers
+
+    # Try wget first — it is more robust for 2.6GB files and academic servers
+    if shutil.which("wget"):
+        print("  Using wget for robust download...")
+        try:
+            # -c: continue/resume, -O: output file, -q: quiet (but we want to see it)
+            # --show-progress: force progress bar even in non-tty
+            subprocess.run(["wget", "-c", url, "-O", str(dest), "--show-progress"], check=True)
+            print("Download complete via wget.")
+            return
+        except subprocess.CalledProcessError:
+            print("  wget failed. Falling back to internal python downloader...")
+
+    # Fallback to urllib
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')]
     urllib.request.install_opener(opener)
@@ -79,8 +94,7 @@ def _download(url: str, dest: Path) -> None:
             pct = min(100, 100 * downloaded / total_size)
             print(f"\r  Progress: {pct:.1f}% ({mb:.0f} MB / {total_size/1_048_576:.0f} MB)", end="", flush=True)
         else:
-            # Fallback if server doesn't provide Content-Length
-            print(f"\r  Downloaded: {mb:.0f} MB ...", end="", flush=True)
+            print(f"\r  Downloaded: {mb:.0f} MB (unknown total) ...", end="", flush=True)
 
     urllib.request.urlretrieve(url, str(dest), reporthook=_progress)
     print("\nDownload complete.")

@@ -72,6 +72,37 @@ def _download_via_keras(download_dir: Path):
     return X, y
 
 
+def _download_via_urllib(download_dir: Path):
+    import pickle
+    import tarfile
+    import urllib.request
+
+    url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+    archive = download_dir / "cifar-10-python.tar.gz"
+
+    if not archive.exists():
+        print(f"Downloading CIFAR-10 (~170 MB) from {url} ...")
+        urllib.request.urlretrieve(url, str(archive))
+
+    print("Extracting...")
+    with tarfile.open(archive, "r:gz") as tar:
+        tar.extractall(download_dir)
+
+    batches_dir = download_dir / "cifar-10-batches-py"
+    batch_files = [f"data_batch_{i}" for i in range(1, 6)] + ["test_batch"]
+
+    X_parts, y_parts = [], []
+    for fname in batch_files:
+        with open(batches_dir / fname, "rb") as f:
+            batch = pickle.load(f, encoding="bytes")
+        X_parts.append(batch[b"data"])   # (10000, 3072) uint8
+        y_parts.extend(batch[b"labels"])
+
+    X = np.concatenate(X_parts, axis=0).astype(np.float32) / 255.0
+    y = np.array(y_parts, dtype=np.int32)
+    return X, y
+
+
 def prepare(
     cache_x: Path = CACHE_X,
     cache_y: Path = CACHE_Y,
@@ -79,7 +110,7 @@ def prepare(
 ) -> None:
     download_dir.mkdir(parents=True, exist_ok=True)
 
-    # Try torchvision first, fall back to keras
+    # Try torchvision → keras → pure urllib (no ML framework required)
     try:
         print("Downloading CIFAR-10 via torchvision...")
         X, y = _download_via_torchvision(download_dir)
@@ -88,12 +119,8 @@ def prepare(
             print("torchvision not found. Trying keras/tensorflow...")
             X, y = _download_via_keras(download_dir)
         except ImportError:
-            raise ImportError(
-                "Either torchvision or tensorflow/keras is required to download "
-                "CIFAR-10.\nInstall one with:\n"
-                "  pip install torchvision\n"
-                "  pip install tensorflow"
-            )
+            print("torchvision/keras not found. Downloading via urllib (no ML framework needed)...")
+            X, y = _download_via_urllib(download_dir)
 
     # Normalise to [0, 1] if not already done
     if X.max() > 1.0:

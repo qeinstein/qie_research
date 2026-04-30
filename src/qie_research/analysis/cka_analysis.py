@@ -115,11 +115,11 @@ def compute_hsic(K: np.ndarray, L: np.ndarray) -> float:
     return float(np.sum(K_c * L_c))
 
 
-def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
+def calculate_cka(X1: np.ndarray, X2: np.ndarray, verbose: bool = False) -> float:
     """
     Calculate the Centered Kernel Alignment (CKA) between two feature maps.
-    
-    This is the primary public entry point for the analysis. It takes two 
+
+    This is the primary public entry point for the analysis. It takes two
     feature matrices (raw or encoded) and returns their geometric similarity.
 
     Parameters
@@ -129,6 +129,8 @@ def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
     X2 : np.ndarray of shape (n_samples, d2)
         The second feature matrix (e.g., RBF-baseline Wine data).
         n_samples MUST be identical for both X1 and X2.
+    verbose : bool
+        Print progress messages. Default False (quiet for batch sweeps).
 
     Returns
     -------
@@ -139,9 +141,9 @@ def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
 
     Mathematical Interpretation
     ---------------------------
-    A CKA score of ~0.95 suggests that your 'Quantum' encoding is just 
-    replicating a classical baseline. A score of < 0.60 with high 
-    classification accuracy suggests the Quantum encoding has found a 
+    A CKA score of ~0.95 suggests that your 'Quantum' encoding is just
+    replicating a classical baseline. A score of < 0.60 with high
+    classification accuracy suggests the Quantum encoding has found a
     'Unique Geometric Advantage' for the task.
     """
     if X1.shape[0] != X2.shape[0]:
@@ -150,23 +152,19 @@ def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
             "CKA requires identical data points in both sets."
         )
 
-    # 1. Compute Linear Gram Matrices (The Kernels)
-    # This represents the inner product of the features.
-    print(f"  Calculating Gram matrices: K({X1.shape}) and L({X2.shape})...")
+    if verbose:
+        print(f"  Calculating Gram matrices: K({X1.shape}) and L({X2.shape})...")
     K = X1 @ X1.T
     L = X2 @ X2.T
 
-    # 2. Compute HSIC components
-    # HSIC(K, L) is the covariance of the similarities.
-    print("  Computing HSIC components...")
+    if verbose:
+        print("  Computing HSIC components...")
     hsic_kl = compute_hsic(K, L)
     hsic_kk = compute_hsic(K, K)
     hsic_ll = compute_hsic(L, L)
 
-    # 3. Normalization
-    # Similar to a Pearson correlation coefficient.
     denominator = np.sqrt(hsic_kk * hsic_ll)
-    
+
     if not np.isfinite(denominator) or denominator <= 0 or np.isclose(denominator, 0.0):
         print(
             "  WARNING: Denominator is zero or numerically unstable "
@@ -178,8 +176,10 @@ def calculate_cka(X1: np.ndarray, X2: np.ndarray) -> float:
     if not np.isfinite(cka_score):
         print("  WARNING: CKA score is non-finite. Returning 0.0.")
         return 0.0
-    print(f"  CKA score calculated: {cka_score:.6f}")
-    
+
+    if verbose:
+        print(f"  CKA score calculated: {cka_score:.6f}")
+
     return float(cka_score)
 
 

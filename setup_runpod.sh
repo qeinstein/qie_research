@@ -5,20 +5,27 @@
 set -euo pipefail
 
 echo "=== [1/3] Installing Python dependencies ==="
+pip install --upgrade pip
 pip install -r requirements-runpod.txt
 
 echo "=== [2/3] Installing qie_research package ==="
 pip install -e .
 
-echo "=== [3/3] Verifying torch GPU access ==="
+echo "=== [3/3] Verifying environment ==="
 python3 -c "
-import torch
-print(f'  torch version : {torch.__version__}')
-print(f'  CUDA available: {torch.cuda.is_available()}')
-if torch.cuda.is_available():
-    print(f'  GPU           : {torch.cuda.get_device_name(0)}')
-else:
-    print('  WARNING: CUDA not available — torch paths will run on CPU')
+try:
+    import torch
+    print(f'  torch version : {torch.__version__}')
+    print(f'  CUDA available: {torch.cuda.is_available()}')
+except ImportError:
+    print('  torch not installed (expected on pure CPU pod)')
+
+try:
+    import qie_research
+    print('  qie_research package: OK')
+except ImportError:
+    print('  ERROR: qie_research package not found in path')
+    exit(1)
 "
 
 mkdir -p data/raw data/processed results/metrics

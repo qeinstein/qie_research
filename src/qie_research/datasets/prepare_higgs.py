@@ -65,18 +65,20 @@ N_COLS = 29  # col 0 = label, cols 1-28 = features
 
 def _download(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Downloading {url}")
-    print("  This file is ~2.6 GB — may take several minutes...")
-
+    print(f"Connecting to {url} ...")
+    
     def _progress(block_num, block_size, total_size):
         downloaded = block_num * block_size
+        mb = downloaded / 1_048_576
         if total_size > 0:
             pct = min(100, 100 * downloaded / total_size)
-            mb = downloaded / 1_048_576
-            print(f"\r  {pct:.1f}%  ({mb:.0f} MB)", end="", flush=True)
+            print(f"\r  Progress: {pct:.1f}% ({mb:.0f} MB / {total_size/1_048_576:.0f} MB)", end="", flush=True)
+        else:
+            # Fallback if server doesn't provide Content-Length
+            print(f"\r  Downloaded: {mb:.0f} MB ...", end="", flush=True)
 
     urllib.request.urlretrieve(url, str(dest), reporthook=_progress)
-    print()  # newline after progress
+    print("\nDownload complete.")
 
 
 def _load_gz_subset(gz_path: Path, n_subset: int, seed: int):

@@ -8,11 +8,14 @@ echo "=== [1/3] Installing Python dependencies ==="
 pip install --upgrade pip
 pip install -r requirements-runpod.txt
 
-echo "=== [2/3] Installing qie_research package ===
+echo "=== [2/3] Installing qie_research package ==="
 pip install -e .
-export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-echo \"export PYTHONPATH=\$PYTHONPATH:$(pwd)/src\" >> ~/.bashrc
-
+# Ensure src is in PYTHONPATH even if pip install -e . has quirks on this pod
+export PYTHONPATH="$(pwd)/src${PYTHONPATH:+:$PYTHONPATH}"
+# Persist for future sessions
+if ! grep -q "PYTHONPATH" ~/.bashrc; then
+    echo "export PYTHONPATH=\"\$(pwd)/src\${PYTHONPATH:+:\$PYTHONPATH}\"" >> ~/.bashrc
+fi
 
 echo "=== [3/3] Verifying environment ==="
 python3 -c "

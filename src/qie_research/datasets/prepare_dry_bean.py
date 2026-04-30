@@ -51,7 +51,7 @@ def prepare(
 
     from sklearn.preprocessing import LabelEncoder
 
-    print("Downloading Dry Bean from UCI ML Repository...")
+    print("Downloading Dry Bean from UCI ML Repository (~2 MB)...")
     dataset = fetch_ucirepo(id=602)
 
     X = dataset.data.features.to_numpy().astype(float)

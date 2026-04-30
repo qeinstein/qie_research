@@ -36,26 +36,71 @@ that the label set is zero-indexed and consistent with the rest of the suite.
 
 from __future__ import annotations
 
+import gzip
+import shutil
+import subprocess
+import urllib.request
 from pathlib import Path
 
 import numpy as np
 
 CACHE_X = Path("data/raw/covertype_X.npy")
 CACHE_Y = Path("data/raw/covertype_y.npy")
+DOWNLOAD_DIR = Path("data/raw/covertype_raw")
+
+# Stable figshare mirror (~11 MB gzip) — same source sklearn uses internally
+_COVTYPE_URL = "https://ndownloader.figshare.com/files/5976039"
+
+
+def _download(url: str, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Connecting to {url} ...")
+    if shutil.which("wget"):
+        print("  Using wget...")
+        try:
+            subprocess.run([
+                "wget", "-c", "-t", "10", "-T", "15", "--waitretry", "5",
+                url, "-O", str(dest), "--show-progress",
+            ], check=True)
+            print("  Download complete.")
+            return
+        except subprocess.CalledProcessError:
+            print("  wget failed. Trying urllib fallback...")
+
+    def _progress(block_num, block_size, total_size):
+        mb = block_num * block_size / 1_048_576
+        if total_size > 0:
+            pct = min(100, 100 * block_num * block_size / total_size)
+            print(f"\r  Progress: {pct:.1f}% ({mb:.1f} MB / {total_size/1_048_576:.1f} MB)",
+                  end="", flush=True)
+        else:
+            print(f"\r  Downloaded: {mb:.1f} MB", end="", flush=True)
+
+    urllib.request.urlretrieve(url, str(dest), reporthook=_progress)
+    print("\n  Download complete.")
 
 
 def prepare(
     cache_x: Path = CACHE_X,
     cache_y: Path = CACHE_Y,
+    download_dir: Path = DOWNLOAD_DIR,
 ) -> None:
-    from sklearn.datasets import fetch_covtype
+    if cache_x.exists() and cache_y.exists():
+        print("Cache already exists — skipping download.")
+        return
 
-    print("Downloading Covertype via scikit-learn (cached after first download)...")
-    bunch = fetch_covtype()
+    raw_gz = download_dir / "covtype.data.gz"
+    if not raw_gz.exists():
+        _download(_COVTYPE_URL, raw_gz)
 
-    X = bunch.data.astype(float)
-    # sklearn returns 1-indexed labels {1..7}; shift to {0..6}
-    y = (bunch.target - 1).astype(np.int32)
+    print("  Parsing covtype.data.gz ...")
+    with gzip.open(raw_gz, "rt") as f:
+        rows = [list(map(float, line.split(","))) for line in f if line.strip()]
+
+    arr = np.array(rows, dtype=np.float64)
+    X = arr[:, :-1]
+    # sklearn convention: labels 1..7 → shift to 0..6
+    y = (arr[:, -1].astype(np.int32) - 1)
 
     cache_x.parent.mkdir(parents=True, exist_ok=True)
     np.save(cache_x, X)
@@ -66,6 +111,10 @@ def prepare(
     print(f"Saved y: {cache_y}  shape={y.shape}  dtype={y.dtype}")
     print(f"Classes: {classes}  ({len(classes)} total)")
     print("Done.")
+
+
+if __name__ == "__main__":
+    prepare()
 
 
 if __name__ == "__main__":

@@ -27,34 +27,87 @@ Output
 
 from __future__ import annotations
 
+import gzip
+import shutil
+import subprocess
+import urllib.request
+import warnings
 from pathlib import Path
 
 import numpy as np
 
 CACHE_X = Path("data/raw/credit_card_fraud_X.npy")
 CACHE_Y = Path("data/raw/credit_card_fraud_y.npy")
+DOWNLOAD_DIR = Path("data/raw/creditcard_raw")
 
-# OpenML dataset ID for Credit Card Fraud Detection
+# Stable OpenML CSV export for dataset 1597 (creditcard.csv, ~66 MB)
+_CSV_URL = "https://api.openml.org/data/v1/download/1597765"
 _OPENML_ID = 1597
+
+
+def _download(url: str, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Connecting to {url} ...")
+    if shutil.which("wget"):
+        print("  Using wget...")
+        try:
+            subprocess.run([
+                "wget", "-c", "-t", "10", "-T", "15", "--waitretry", "5",
+                url, "-O", str(dest), "--show-progress",
+            ], check=True)
+            print("  Download complete.")
+            return
+        except subprocess.CalledProcessError:
+            print("  wget failed. Trying urllib fallback...")
+
+    def _progress(block_num, block_size, total_size):
+        mb = block_num * block_size / 1_048_576
+        if total_size > 0:
+            pct = min(100, 100 * block_num * block_size / total_size)
+            print(f"\r  Progress: {pct:.1f}% ({mb:.0f} MB / {total_size/1_048_576:.0f} MB)",
+                  end="", flush=True)
+        else:
+            print(f"\r  Downloaded: {mb:.0f} MB", end="", flush=True)
+
+    urllib.request.urlretrieve(url, str(dest), reporthook=_progress)
+    print("\n  Download complete.")
 
 
 def prepare(
     cache_x: Path = CACHE_X,
     cache_y: Path = CACHE_Y,
+    download_dir: Path = DOWNLOAD_DIR,
 ) -> None:
     if cache_x.exists() and cache_y.exists():
         print("Cache already exists — skipping download.")
         return
 
-    from sklearn.datasets import fetch_openml
+    raw_csv = download_dir / "creditcard.arff.gz"
+    if not raw_csv.exists():
+        _download(_CSV_URL, raw_csv)
 
-    print(f"Fetching Credit Card Fraud from OpenML (id={_OPENML_ID}) ...")
-    dataset = fetch_openml(data_id=_OPENML_ID, as_frame=False, parser="auto")
-
-    X = dataset.data.astype(float)
-
-    # OpenML encodes the target as strings ('0' / '1')
-    y = (dataset.target.astype(str) == "1").astype(np.int32)
+    # Parse the downloaded ARFF (OpenML format) — fall back to fetch_openml on failure
+    try:
+        print("  Parsing ARFF...")
+        with gzip.open(raw_csv, "rt", encoding="utf-8") as f:
+            content = f.read()
+        data_start = content.lower().index("@data") + len("@data")
+        rows = [
+            line.strip().split(",")
+            for line in content[data_start:].strip().splitlines()
+            if line.strip() and not line.startswith("%")
+        ]
+        arr = np.array(rows, dtype=np.float64)
+        X = arr[:, :-1]
+        y = arr[:, -1].astype(np.int32)
+    except Exception as e:
+        print(f"  ARFF parse failed ({e}), falling back to fetch_openml...")
+        from sklearn.datasets import fetch_openml
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dataset = fetch_openml(data_id=_OPENML_ID, as_frame=False, parser="auto")
+        X = dataset.data.astype(float)
+        y = (dataset.target.astype(str) == "1").astype(np.int32)
 
     cache_x.parent.mkdir(parents=True, exist_ok=True)
     np.save(cache_x, X)

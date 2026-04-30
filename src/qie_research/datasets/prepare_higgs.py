@@ -67,6 +67,11 @@ def _download(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     print(f"Connecting to {url} ...")
     
+    # Use a real User-Agent to avoid being blocked by academic servers
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')]
+    urllib.request.install_opener(opener)
+
     def _progress(block_num, block_size, total_size):
         downloaded = block_num * block_size
         mb = downloaded / 1_048_576

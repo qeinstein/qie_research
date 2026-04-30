@@ -133,13 +133,20 @@ def _print_qie_vs_classical(dataset: str, scores: dict, has_poly2: bool) -> None
         print(row)
 
 
-def run_sweep(stats_path: Path, configs_dir: Path, out_path: Path) -> None:
+def run_sweep(
+    stats_path: Path,
+    configs_dir: Path,
+    out_path: Path,
+    datasets: list[str] | None = None,
+    existing: list[dict] | None = None,
+) -> None:
     with open(stats_path) as f:
         stats = list(csv.DictReader(f))
 
-    rows: list[dict] = []
+    rows: list[dict] = list(existing or [])
+    target = datasets if datasets is not None else _DATASETS
 
-    for dataset in _DATASETS:
+    for dataset in target:
         print(f"\n{dataset}", flush=True)
 
         with open(configs_dir / f"{dataset}.yaml") as f:
@@ -202,7 +209,8 @@ def run_sweep(stats_path: Path, configs_dir: Path, out_path: Path) -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"\nWrote {out_path} ({len(rows)} pairs across {len(_DATASETS)} datasets)")
+    n_ds = len({r["dataset"] for r in rows})
+    print(f"\nWrote {out_path} ({len(rows)} pairs across {n_ds} datasets)")
 
 
 def main() -> None:
@@ -210,12 +218,27 @@ def main() -> None:
     parser.add_argument("--stats", type=Path, default=Path("results/summary/stats.csv"))
     parser.add_argument("--configs-dir", type=Path, default=Path("configs"))
     parser.add_argument("--out", type=Path, default=Path("results/summary/cka_scores.csv"))
+    parser.add_argument(
+        "--datasets", nargs="+", metavar="DS",
+        help="Only run these datasets; merges into existing CSV (replaces their rows).",
+    )
     args = parser.parse_args()
 
     if not args.stats.exists():
         sys.exit(f"stats.csv not found at {args.stats} — run aggregate_results first")
 
-    run_sweep(args.stats, args.configs_dir, args.out)
+    target = None
+    existing = None
+    if args.datasets:
+        unknown = set(args.datasets) - set(_DATASETS)
+        if unknown:
+            sys.exit(f"Unknown datasets: {sorted(unknown)}. Valid: {_DATASETS}")
+        target = [d for d in _DATASETS if d in set(args.datasets)]
+        if args.out.exists():
+            with open(args.out) as f:
+                existing = [r for r in csv.DictReader(f) if r["dataset"] not in set(target)]
+
+    run_sweep(args.stats, args.configs_dir, args.out, datasets=target, existing=existing)
 
 
 if __name__ == "__main__":

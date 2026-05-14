@@ -1,0 +1,38 @@
+% ============================================================
+\section{Practical Overhead}
+\label{sec:overhead}
+% ============================================================
+
+Table~\ref{tab:overhead} reports mean encoding time and memory across datasets.
+Encoding overhead is not the limiting factor for any QIE.
+Amplitude encoding at $35\,\mathrm{ms}$ matches the cost of standardising raw
+features and is ${\approx}312\times$ faster than polynomial degree-2
+($10.98\,\mathrm{s}$).
+Basis encoding at $1.75\,\mathrm{s}$, the most expensive QIE, is still
+$6\times$ cheaper than the polynomial expansion.
+This is a qualified positive finding: encoding cost is low enough that if the
+geometry were right, QIE would be the preferred option on latency-constrained
+pipelines.
+The bottleneck is the representational mismatch identified in
+Section~\ref{sec:analysis}, not speed.
+
+\begin{table}[tbp]
+\centering
+\caption{Encoding overhead (mean across 10 datasets).}
+\label{tab:overhead}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Method & Enc.\ time (ms) & Train time (s) & Enc.\ mem.\ (MB) & Train mem.\ (MB) \\
+\midrule
+Amplitude (QIE) &     35.2 &    13.1 & 135.7 &   4.8 \\
+Angle (QIE)     &    811.3 &   114.2 & 291.0 &   5.6 \\
+Basis (QIE)     &  1{,}748 &    39.6 & 436.5 & 345.7 \\
+\midrule
+Raw linear      &     35.2 &    74.7 &  47.9 &  38.0 \\
+RFF             &    193.0 &     2.1 &  65.2 &  24.5 \\
+PCA             &  1{,}045 &    14.5 &  29.1 &  15.2 \\
+Poly-2          & 10{,}981 &   144.9 & 818.5 & 178.4 \\
+\bottomrule
+\end{tabular}
+\end{table}

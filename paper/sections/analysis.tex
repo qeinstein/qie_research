@@ -1,0 +1,174 @@
+% ============================================================
+\section{Spectral Attribution Analysis}
+\label{sec:analysis}
+% ============================================================
+
+Raw accuracy differences are insufficient to explain \emph{why} QIE
+representations fail.
+We attribute each failure mode to a spectral or geometric property of the
+encoded feature matrix.
+
+\subsection{Amplitude Encoding: Spectral Collapse on Low-Dimensional Data}
+\label{sec:amplitude}
+
+$\ell_2$-normalisation (Eq.~\ref{eq:amplitude}) projects all inputs onto the
+unit hypersphere, destroying magnitude information.
+The failure mode takes two related but distinct forms depending on the
+intrinsic dimensionality of the input.
+
+\paragraph{Rank collapse on tabular data.}
+When the input features span a low-dimensional manifold — common in tabular
+datasets with correlated features — normalisation concentrates the encoded
+distribution on a small region of the unit sphere.
+The encoded matrix collapses to near-rank-1.
+Table~\ref{tab:spectral_amplitude} documents this for the tabular and
+structured datasets.
+
+\begin{table}[tbp]
+\centering
+\caption{Spectral properties of amplitude encoding.  On tabular datasets
+failure is driven by rank collapse ($\erank \ll 1$); on image datasets rank
+is adequate but conditioning is catastrophic.}
+\label{tab:spectral_amplitude}
+\small
+\begin{tabular}{lrrl}
+\toprule
+Dataset & $\erank$ & $\log_{10}\kappa$ & Accuracy gap \\
+\midrule
+\multicolumn{4}{l}{\textit{Tabular / structured}} \\
+Dry Bean        &     1.0 &  9.76 & $-0.67$ \\
+Wine            &     1.4 &  3.82 & $-0.35$ \\
+Breast Cancer   &     1.6 &  5.88 & $-0.20$ \\
+Covertype       &     3.2 &  5.73 & $-0.27$ \\
+\midrule
+\multicolumn{4}{l}{\textit{Image (high-dimensional input)}} \\
+CIFAR-10        &   460.9 &  4.48 & $-0.08$ \\
+Fashion-MNIST   &   339.6 &  5.64 & $-0.04$ \\
+\midrule
+\multicolumn{4}{l}{\textit{Control}} \\
+High-rank noise & 197.3   &  0.35 & $-0.00$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Ill-conditioning on image data.}
+On high-dimensional image datasets, amplitude encoding does \emph{not} produce
+rank collapse: Fashion-MNIST yields $\erank{=}339.6$ (out of $\dout{=}1{,}024$)
+and CIFAR-10 yields $\erank{=}460.9$ (out of $\dout{=}4{,}096$).
+Nevertheless, performance remains well below the best classical baseline.
+The spectral explanation shifts from rank to conditioning: $\log_{10}\kappa{=}5.64$
+for Fashion-MNIST and $4.48$ for CIFAR-10.
+In the image case, $\ell_2$-normalisation imposes extreme scale variation
+across the encoded dimensions, making the resulting Gram matrix ill-conditioned
+even though its rank is not degenerate.
+The failure mode is the same operation ($\ell_2$-normalisation) but acting on
+intrinsically high-rank inputs; the symptom shifts from rank collapse to
+catastrophic conditioning.
+
+\paragraph{The control case.}
+The high-rank noise dataset provides the falsifiable control: with $d{=}200$
+isotropic Gaussian noise features, inputs already lie near-uniformly on the
+unit sphere.
+Normalisation neither collapses the rank ($\erank{=}197.3$) nor degrades
+conditioning ($\kappa{=}2.22$), and amplitude is the only method achieving
+near-parity with the best classical baseline ($d{=}{-}0.03$, $p{=}0.96$).
+
+Figure~\ref{fig:kappa} shows the relationship between $\log_{10}\kappa$ and
+accuracy gap across all datasets.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/spectral_kappa_vs_gap.png}
+  \caption{Condition number ($\log_{10}\kappa$) versus accuracy gap relative to
+  best classical baseline for amplitude encoding across all ten datasets.
+  The association holds regardless of whether failure is driven by rank collapse
+  (low-$\erank$ tabular datasets) or ill-conditioning (high-$\erank$ image datasets).}
+  \label{fig:kappa}
+\end{figure}
+
+\subsection{Angle Encoding: Geometric Equivalence to Linear}
+\label{sec:angle}
+
+The $(\cos(\theta/2), \sin(\theta/2))$ map is smooth and differentiable, but
+under logistic regression it reduces to a scaled linear transform.
+Table~\ref{tab:cka_angle} reports CKA between angle encoding and raw
+(standardised) features.
+
+\begin{table}[tbp]
+\centering
+\caption{CKA between angle encoding and raw linear features.}
+\label{tab:cka_angle}
+\small
+\begin{tabular}{lr}
+\toprule
+Dataset & CKA(angle, raw linear) \\
+\midrule
+Fashion-MNIST   & 0.973 \\
+High-rank noise & 0.985 \\
+High-dim parity & 0.968 \\
+Wine            & 0.971 \\
+Breast Cancer   & 0.957 \\
+Dry Bean        & 0.964 \\
+CIFAR-10        & 0.971 \\
+HIGGS           & 0.636 \\
+Credit Fraud    & 0.514 \\
+Covertype       & 0.527 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On 7/10 datasets, CKA $\geq 0.95$: the angle-encoded Gram matrix is nearly
+identical to that of standardised raw features.
+The encoding is geometrically equivalent to a linear map under logistic
+probing, providing no nonlinear representational lift.
+The three lower-CKA datasets (HIGGS, Credit Fraud, Covertype) are exactly
+those where magnitude or distributional structure breaks the
+linear-scaling relationship; yet angle encoding does not improve performance
+on these datasets either, consistent with the geometry being different rather
+than better.
+
+\subsection{Basis Encoding: Hamming Geometry Mismatch}
+\label{sec:basis}
+
+Basis encoding achieves variable $\erank$ across the benchmark: normalised
+effective rank ($\erank/\dout$) ranges from 0.07 on CIFAR-10 to 0.88 on
+high-dim parity, with tabular datasets concentrated in the 0.70--0.88 band.
+Conditioning is favourable on image datasets ($\kappa{=}107$ on CIFAR-10,
+$\kappa{=}142$ on Fashion-MNIST), where the 8-bit binary expansion preserves
+distinct bit patterns across the high-dimensional feature space.
+Its Gram matrix is geometrically distinct from all classical baselines.
+On tabular datasets, $\mathrm{CKA}(\text{basis, raw linear})$ ranges from
+0.36 to 0.45.
+On image datasets the separation is more extreme: $\mathrm{CKA} = 0.011$ on
+Fashion-MNIST and $0.001$ on CIFAR-10, confirming that 8-bit binary
+quantisation produces a maximally orthogonal representation to pixel-space
+linear features.
+This geometric novelty, however, does not translate to better classification.
+Binary quantisation imposes a Hamming geometry on the feature space: the
+$\ell_2$ distance between two encoded samples reflects bit-flip counts, not
+the smooth amplitude differences that discriminate classes on all ten
+benchmark datasets.
+As a result, basis encoding achieves 0/10 statistically competitive results
+despite its favourable conditioning.
+
+\subsection{The Spectral Prediction}
+\label{sec:prediction}
+
+Figure~\ref{fig:erank} plots effective rank (normalised by $\dout$) against
+accuracy gap for all encodings and datasets.
+The spectral attribution framework yields a single unified prediction: QIE
+approaches competitive performance when $\erank / \dout \approx 1$ and
+$\kappa \approx 1$ — that is, when the encoding does not collapse the input
+geometry.
+This condition is satisfied on one dataset (amplitude, high-rank noise) and
+approached on none others, consistent with the prediction.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/spectral_erank_vs_acc.png}
+  \caption{Normalised effective rank ($\erank/\dout$) versus accuracy relative
+  to raw linear baseline across all encodings and datasets.
+  The one near-parity point (amplitude, high-rank noise) has
+  $\erank/\dout{=}0.77$ and $\kappa{=}2.22$.}
+  \label{fig:erank}
+\end{figure}

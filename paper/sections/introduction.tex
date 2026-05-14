@@ -1,0 +1,52 @@
+% ============================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================
+
+Quantum machine learning has generated substantial interest around the
+hypothesis that quantum-inspired data representations could improve learning
+on classical hardware~\citep{havlicek2019,schuld2019}.
+Amplitude, angle, and basis encoding are the canonical strategies for loading
+classical data into quantum circuits, and they induce specific geometric
+transformations: $\ell_2$-normalisation with power-of-two dimensional
+expansion, per-feature trigonometric lifting, and binary discretisation
+respectively.
+Applied as explicit classical feature maps, these transformations can be
+evaluated independently of quantum hardware, making it possible to isolate the
+geometric contribution of the encoding from hardware-specific quantum effects.
+
+Prior work has shown that classical algorithms can match or exceed quantum
+algorithms on certain linear-algebra tasks~\citep{tang2019} and that classical
+kernels can be trained to match quantum kernel performance on benchmark
+datasets~\citep{kubler2021,huang2021}.
+However, these comparisons focus on accuracy endpoints.
+The question of \emph{why} QIE representations succeed or fail, in terms of
+rank structure, spectral conditioning, and kernel alignment, has not been
+systematically addressed.
+
+This paper makes the following contributions:
+\begin{enumerate}
+  \item A ten-dataset, five-seed benchmark of amplitude, angle, and basis
+        encoding against eight classical baselines (raw linear, RBF-SVM,
+        polynomial degree-2 and degree-3, Random Fourier Features, PCA,
+        and two MLP variants) under matched representational budget.
+  \item A spectral attribution framework that identifies the precise failure
+        mode of each encoding: rank collapse, geometric equivalence, and
+        Hamming geometry mismatch.
+  \item A falsifiable prediction: QIE approaches competitive performance when
+        the dataset's intrinsic geometry uniformly fills the encoding's output
+        space.  We verify this prediction on the high-rank noise dataset.
+  \item An overhead characterisation showing that encoding cost is not the
+        bottleneck (amplitude: $35\,\mathrm{ms}$, matching raw standardisation;
+        polynomial degree-2: $10.98\,\mathrm{s}$).
+\end{enumerate}
+
+The paper is organised as follows.
+Section~\ref{sec:related} surveys related work.
+Section~\ref{sec:methods} describes the encodings, baselines, datasets,
+and evaluation protocol.
+Section~\ref{sec:results} reports predictive performance and statistical tests.
+Section~\ref{sec:analysis} presents the spectral attribution analysis.
+Section~\ref{sec:overhead} characterises practical overhead.
+Section~\ref{sec:discussion} discusses implications and limitations.
+Section~\ref{sec:conclusion} concludes.

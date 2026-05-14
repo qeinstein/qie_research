@@ -1,0 +1,28 @@
+Quantum-inspired encodings (QIE) — amplitude, angle, and basis encoding —
+have been proposed as fixed feature maps that import quantum-circuit geometry
+into classical machine learning pipelines.
+We conduct the first systematic benchmark of all three encodings across ten
+diverse datasets, evaluating predictive performance, spectral geometry, kernel
+alignment, and practical overhead under a strictly matched representational budget.
+Across 30 encoding-dataset pairs, QIE achieves zero statistically significant
+accuracy wins against strong classical baselines (24/30 significantly worse at
+$\alpha{=}0.05$; of the remaining six, three are negligible near-ties
+($|d|\leq 0.18$, $p\geq 0.70$) and three carry non-negligible effect sizes
+($|d|=0.77$--$1.05$) that do not reach significance at five seeds, consistent
+with QIE being worse but statistically underpowered; paired $t$-test and
+Wilcoxon signed-rank).
+Rather than reporting a simple failure, we provide a mechanistic spectral
+attribution for each encoding: amplitude encoding undergoes rank collapse under
+$\ell_2$-normalisation ($\erank$ as low as 1.04, condition number $\kappa$
+up to $5.7{\times}10^9$); angle encoding is geometrically equivalent to a
+scaled linear map under logistic probing
+($\mathrm{CKA}(\text{angle, raw linear})\geq 0.95$ on 7/10 datasets);
+and basis encoding, while spectrally well-conditioned, imposes a binary Hamming
+geometry misaligned with smooth discriminative manifolds.
+The one structural condition under which QIE approaches competitive performance,
+namely uniformly filled output space, is exemplified by amplitude encoding on the
+high-rank noise dataset ($\erank{=}197.3$, $d{=}{-}0.03$, $p{=}0.96$) and is
+precisely predicted by the spectral framework.
+Our findings imply that the geometry imposed by quantum-circuit-inspired feature
+maps does not, in isolation, confer a representational advantage over classical
+alternatives, and that encoding overhead is not the limiting factor.

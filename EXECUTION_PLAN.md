@@ -85,9 +85,11 @@ explicitly in the paper's Experimental Setup section.
 
 ### Physics / Large-Scale
 
-- HIGGS 500k subset (500,000 samples, 21 features, binary) — canonical
+- HIGGS 500k subset (500,000 samples, 28 features, binary) — canonical
   large-scale benchmark in the quantum ML literature; reviewers familiar with
   QML papers will specifically expect this dataset.
+  (28 features confirmed from prepare_higgs.py: N_COLS=29, col 0 = label,
+  cols 1–28 = features; original plan entry of 21 was incorrect.)
 
 ### Synthetic
 

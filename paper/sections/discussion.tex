@@ -1,0 +1,61 @@
+% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+% ============================================================
+
+\paragraph{What the results say.}
+Quantum-inspired encodings, deployed as fixed feature maps with linear
+classification, do not provide a statistically significant accuracy advantage
+over classical feature engineering on any of ten diverse benchmark datasets.
+The failure is not uniform: each encoding has a distinct, spectrally
+identifiable cause.
+The mechanistic attribution (rank collapse, geometric equivalence, Hamming
+mismatch) is more informative than a simple accuracy ranking.
+
+\paragraph{Qualified positive findings.}
+Three findings deserve emphasis rather than dismissal.
+First, encoding overhead is negligible and should not be cited as a reason to
+avoid QIE in future work.
+Second, amplitude encoding on high-rank noise is statistically
+indistinguishable from the best classical method; this is a structurally
+grounded result, not luck.
+Third, basis encoding's distinctly low CKA with classical baselines suggests
+it could serve as a complementary feature in ensemble settings rather than a
+standalone replacement.
+
+\paragraph{Implications for quantum ML.}
+The results do not speak to quantum hardware advantage.
+Actual quantum computers can exploit superposition and entanglement in ways
+that are classically intractable.
+What this work shows is that the \emph{geometric structure} induced by quantum
+encoding circuits, in isolation, does not confer a representational advantage
+on classical data.
+If quantum advantage in ML materialises, it will not be because of the fixed
+feature map alone.
+
+\paragraph{Where quantum advantage may still appear.}
+A natural reviewer objection is that the ten benchmark datasets used here
+are not the tasks where quantum advantage would be expected to show up.
+This objection is well-founded.
+Tasks with genuinely quantum-structured inputs, such as molecular energy
+surfaces, quantum simulation outputs, or problems with provably hard classical
+representations, may exhibit a different picture.
+The present findings are therefore best interpreted as ruling out fixed QIE
+geometry as a source of advantage on \emph{classical} data distributions, not
+as ruling out quantum advantage in general.
+Whether quantum-structured data breaks the spectral attribution framework
+developed here is an open and important question.
+
+\paragraph{Limitations.}
+This benchmark evaluates fixed, parameter-free feature maps with a linear
+probe or shallow MLP.
+Learned quantum-inspired encodings (parameterised quantum circuits or trainable
+angle schedules) are out of scope and represent the most natural next step:
+if the angle schedule is jointly optimised with the downstream loss, the
+geometric-equivalence failure mode documented here may not apply.
+All comparisons use a single downstream linear classifier or shallow MLP;
+deeper architectures may interact differently with QIE representations.
+Neural Tangent Kernel (NTK) analysis, which would characterise how each
+encoding reshapes the optimisation landscape and whether observed conditioning
+differences propagate to gradient-flow behaviour, was not conducted in this
+study and remains an open direction for follow-on work.

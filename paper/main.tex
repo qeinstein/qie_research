@@ -1,0 +1,68 @@
+\documentclass[12pt]{article}
+
+\usepackage[top=1in,bottom=1in,left=1.25in,right=1.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs,multirow,graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,
+            linkcolor=NavyBlue,
+            citecolor=NavyBlue,
+            urlcolor=NavyBlue]{hyperref}
+\usepackage{url}
+\usepackage{natbib}
+\bibliographystyle{abbrvnat}
+
+\setlength{\floatsep}{12pt}
+\setlength{\textfloatsep}{16pt}
+\setlength{\abovecaptionskip}{6pt}
+\setlength{\belowcaptionskip}{2pt}
+
+\newcommand{\erank}{\mathrm{erank}}
+\newcommand{\dout}{d_{\mathrm{out}}}
+\newcommand{\Rbb}{\mathbb{R}}
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% ============================================================
+\title{%
+  \textbf{Benchmarking Quantum-Inspired Feature Encodings as Explicit
+  High-Dimensional Representations in Classical Machine Learning}%
+}
+
+\author{%
+  \TODO{Author names}\\
+  \TODO{Institution}\\
+  \texttt{\TODO{email}}
+}
+
+\date{\TODO{Month} 2026}
+% ============================================================
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/methods}
+\input{sections/results}
+\input{sections/analysis}
+\input{sections/overhead}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

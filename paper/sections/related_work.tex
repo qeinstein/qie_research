@@ -1,0 +1,63 @@
+% ============================================================
+\section{Related Work}
+\label{sec:related}
+% ============================================================
+
+\paragraph{Quantum feature maps and kernel methods.}
+The idea of using quantum circuits as feature maps for supervised learning
+was formalised by \citet{havlicek2019}, who demonstrated that quantum-enhanced
+feature spaces can express kernels that are classically hard to evaluate.
+\citet{schuld2019} showed that variational quantum circuits are equivalent to
+kernel methods operating in a quantum feature Hilbert space, providing a
+theoretical bridge between quantum computing and classical kernel theory.
+\citet{perez2020} extended this line of work with a data re-uploading strategy
+that enables a single qubit to act as a universal classifier by encoding inputs
+multiple times through the circuit.
+
+\paragraph{Dequantisation and classical matching.}
+A growing body of work has shown that classical algorithms can match or
+approximate quantum methods under certain conditions.
+\citet{tang2019} introduced the technique of dequantisation, demonstrating
+that a classical algorithm can replicate the polynomial speedup of a quantum
+recommendation system when given sampling access to the data.
+\citet{huang2021} showed that, given sufficient data, classical machine
+learning models can match the predictive performance of quantum kernel methods
+on benchmark tasks, raising the question of whether quantum advantage in ML
+requires a data regime beyond current experiments.
+\citet{kubler2021} characterised the inductive bias of quantum kernels and
+showed that it is governed by the geometry of the data distribution, implying
+that classical kernels with matching geometry can replicate quantum kernel
+behaviour.
+
+\paragraph{Limitations and failure modes of QML.}
+Several theoretical results constrain the practical reach of quantum ML models.
+\citet{cerezo2021} survey variational quantum algorithms and document the
+barren plateau phenomenon, in which gradients vanish exponentially with system
+size, making training intractable at scale.
+\citet{abbas2021} analyse the effective dimension and Fisher information of
+quantum neural networks, finding that while quantum models can exhibit high
+effective dimension, this does not straightforwardly translate to improved
+generalisation.
+The concentration of quantum kernel values, whereby Gram matrix entries become
+exponentially similar with increasing qubit count, further limits the
+discriminative power of quantum kernels on large
+problems~\citep{thanasilp2022}.
+
+\paragraph{Explicit feature maps in classical ML.}
+The strategy of computing an explicit feature map to approximate a kernel
+was introduced by \citet{rahimi2007} through Random Fourier Features (RFF),
+which approximate the RBF kernel via random cosine projections and serve as
+one of the strongest classical baselines in this benchmark.
+The broader framework of kernel methods and reproducing kernel Hilbert spaces
+that underlies both classical and quantum feature map approaches is surveyed
+in \citet{scholkopf2002}.
+
+\paragraph{Positioning of this work.}
+Prior comparisons between QIE and classical methods have focused primarily
+on accuracy endpoints.
+This work differs by providing a mechanistic spectral attribution, in terms
+of effective rank, condition number, and CKA, that explains \emph{why} each
+encoding succeeds or fails rather than simply reporting whether it does.
+The benchmark is also the first to evaluate all three canonical encodings
+(amplitude, angle, basis) jointly across ten diverse datasets under a strictly
+matched representational budget.

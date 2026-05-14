@@ -1,0 +1,144 @@
+% ============================================================
+\section{Methods}
+\label{sec:methods}
+% ============================================================
+
+\subsection{Quantum-Inspired Feature Encodings}
+\label{sec:encodings}
+
+All three encodings are implemented as deterministic, parameter-free
+transformations $\phi: \Rbb^d \to \Rbb^{\dout}$ fitted to training-set
+statistics only.
+No quantum simulator or circuit library is used; the encodings are pure NumPy
+implementations of the geometric structure induced by the corresponding
+quantum circuits.
+
+\paragraph{Amplitude encoding.}
+Given $\mathbf{x} \in \Rbb^d$, amplitude encoding produces
+\begin{equation}
+  \phi_{\mathrm{amp}}(\mathbf{x}) =
+    \frac{\mathbf{x}}{\|\mathbf{x}\|_2 + \varepsilon}
+    \;\text{(zero-padded to } 2^{\lceil\log_2 d\rceil}\text{)},
+  \label{eq:amplitude}
+\end{equation}
+with $\varepsilon = 10^{-12}$ to guard against zero-norm inputs.
+The output satisfies $\sum_i \phi_i^2 = 1$, mirroring the Born-rule
+normalisation constraint on quantum state amplitudes.
+The power-of-two padding expands dimensionality from $d$ to
+$\dout = 2^{\lceil\log_2 d\rceil}$.
+
+\paragraph{Angle encoding.}
+Each feature $x_i$ is mapped to a pair of trigonometric values derived from
+the quantum rotation gate
+$R_y(\theta)|0\rangle = \cos(\theta/2)|0\rangle + \sin(\theta/2)|1\rangle$:
+\begin{equation}
+  \phi_{\mathrm{ang}}(\mathbf{x}) =
+  [\cos(\theta_1/2),\,\sin(\theta_1/2),\,\ldots,\,
+   \cos(\theta_d/2),\,\sin(\theta_d/2)],
+  \quad \theta_i = \pi \tilde{x}_i,
+  \label{eq:angle}
+\end{equation}
+where $\tilde{x}_i \in [-1,1]$ is obtained by min-max scaling each feature to
+the training range.
+The output dimension is $\dout = 2d$.
+Each $(\cos,\sin)$ pair lies on the unit circle, satisfying
+$\cos^2(\theta_i/2) + \sin^2(\theta_i/2) = 1$.
+
+\paragraph{Basis encoding.}
+Each continuous feature is quantised to $b = 8$ bits and unpacked to its
+binary representation:
+\begin{equation}
+  \phi_{\mathrm{bas}}(\mathbf{x}) =
+    [b_1^{(1)},\ldots,b_b^{(1)},\;
+     b_1^{(2)},\ldots,b_b^{(2)},\;\ldots]
+    \in \{0,1\}^{d \cdot b},
+  \label{eq:basis}
+\end{equation}
+where $b_k^{(i)}$ is the $k$-th bit (MSB first) of the quantised value of
+feature $x_i$.
+The output dimension is $\dout = d \cdot b = 8d$.
+This encoding is not differentiable; NTK analysis does not apply.
+
+\subsection{Classical Baselines}
+\label{sec:baselines}
+
+Eight classical baselines are evaluated under the same matched-budget protocol:
+
+\begin{itemize}
+  \item \textbf{Raw linear:} standardised features with logistic regression.
+  \item \textbf{RBF-SVM:} radial basis function kernel SVM with bandwidth
+        tuned by cross-validation.
+  \item \textbf{Polynomial (degree 2/3):} polynomial kernel logistic
+        regression; degree chosen per dataset.
+  \item \textbf{Random Fourier Features (RFF):} explicit kernel approximation
+        of RBF with $\dout$ features~\citep{rahimi2007}.
+  \item \textbf{PCA + logistic regression:} principal component projection
+        to $\dout$ dimensions.
+  \item \textbf{MLP (sklearn) and PyTorch MLP:} two-layer networks
+        with ReLU activations; the strongest adaptive baselines.
+\end{itemize}
+
+All baselines receive the same output dimensionality $\dout$ as the QIE
+encoding they are compared against, the same random seeds, and the same
+train-test split.
+
+\subsection{Datasets}
+\label{sec:datasets}
+
+Table~\ref{tab:datasets} summarises the ten benchmark datasets spanning six
+categories.
+Datasets were frozen before any experimental results were observed
+(Phase~3 freeze).
+
+\begin{table}[tbp]
+\centering
+\caption{Benchmark dataset roster.  Sample counts reflect the subset used in
+experiments; full dataset sizes are given in parentheses where subsampling
+was applied.}
+\label{tab:datasets}
+\small
+\begin{tabular}{llrrrl}
+\toprule
+Dataset & Category & Samples & Features & Classes & Task \\
+\midrule
+UCI Wine           & Tabular     & 178                     & 13      & 3  & multiclass \\
+UCI Breast Cancer  & Tabular     & 569                     & 30      & 2  & binary \\
+Dry Bean           & Tabular     & 13{,}611                & 16      & 7  & multiclass \\
+Credit Card Fraud  & Financial   & 284{,}807               & 30      & 2  & binary (imb.) \\
+Fashion-MNIST$^*$ & Image       & 10{,}000 (of 70{,}000)  & 784     & 10 & multiclass \\
+CIFAR-10$^*$      & Image       & 10{,}000 (of 60{,}000)  & 3{,}072 & 10 & multiclass \\
+HIGGS              & Physics     & 500{,}000               & 28      & 2  & binary \\
+High-dim parity    & Synthetic   & 10{,}000                & 20      & 2  & binary (XOR) \\
+High-rank noise    & Synthetic   & 5{,}000                 & 200     & 2  & binary \\
+Covertype$^\dagger$ & Large-scale & 50{,}000 (of 581{,}012) & 54    & 7  & multiclass \\
+\bottomrule
+\multicolumn{6}{l}{\small$^*$Stratified subsample; basis encoding at full scale expands to} \\
+\multicolumn{6}{l}{\small\phantom{$^*$}6{,}272 (Fashion-MNIST) and 24{,}576 (CIFAR-10) dimensions,} \\
+\multicolumn{6}{l}{\small\phantom{$^*$}making full-scale logistic regression computationally intractable.} \\
+\multicolumn{6}{l}{\small$^\dagger$Stratified subsample for computational tractability.} \\
+\end{tabular}
+\end{table}
+
+\subsection{Evaluation Protocol}
+\label{sec:protocol}
+
+All comparisons satisfy the following matched-budget constraints:
+\begin{itemize}
+  \item \textbf{Matched $\dout$:} classical baselines receive the same output
+        dimensionality as the QIE encoding.
+  \item \textbf{Matched optimisation:} identical solver, learning rate
+        schedule, and epoch budget across all methods.
+  \item \textbf{Matched regularisation:} same regularisation family and
+        comparable grid search effort.
+  \item \textbf{Matched seeds:} five independent seeds
+        $\{7, 42, 99, 1337, 2026\}$ with identical train/test splits.
+\end{itemize}
+
+Primary performance metrics are accuracy and macro-averaged F1.
+Statistical significance is assessed via paired $t$-test and Wilcoxon
+signed-rank test over the five seeds, with effect size reported as Cohen's $d$.
+The significance threshold is $\alpha = 0.05$.
+Representation geometry is characterised by effective rank
+$\erank(\mathbf{X}) = \exp\!\bigl(-\sum_i \hat{\sigma}_i \log \hat{\sigma}_i\bigr)$
+(where $\hat{\sigma}$ are the normalised singular values), condition number
+$\kappa$, and Centered Kernel Alignment (CKA)~\citep{kornblith2019}.

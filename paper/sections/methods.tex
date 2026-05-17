@@ -132,11 +132,15 @@ All comparisons satisfy the following matched-budget constraints:
         comparable grid search effort.
   \item \textbf{Matched seeds:} five independent seeds
         $\{7, 42, 99, 1337, 2026\}$ with identical train/test splits.
+        Dry Bean and high-dimensional parity were subsequently extended to ten
+        seeds (adding $\{100, 200, 300, 400, 500\}$) after initial results
+        showed large effect sizes that fell short of $\alpha=0.05$ under the
+        five-seed design.
 \end{itemize}
 
 Primary performance metrics are accuracy and macro-averaged F1.
 Statistical significance is assessed via paired $t$-test and Wilcoxon
-signed-rank test over seeds, with effect size reported as Cohen's $d$.
+signed-rank test over all available seeds, with effect size reported as Cohen's $d$.
 The significance threshold is $\alpha = 0.05$.
 Representation geometry is characterised by effective rank
 $\erank(\mathbf{X}) = \exp\!\bigl(-\sum_i \hat{\sigma}_i \log \hat{\sigma}_i\bigr)$

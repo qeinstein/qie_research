@@ -341,7 +341,7 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
     ax.set_xlabel("Effective rank ($\\mathrm{erank}$) of encoded feature matrix", labelpad=8)
     ax.set_ylabel("Test accuracy (mean, 5 seeds)", labelpad=8)
     ax.set_title("Feature-space effective rank vs. classification accuracy", pad=10)
-    ax.legend(framealpha=0.9, loc="upper left")
+    ax.legend(framealpha=0.9, loc="upper right")
     ax.grid(True, alpha=0.2, linewidth=0.6)
     fig.tight_layout(pad=1.5)
     p = fig_dir / "spectral_erank_vs_acc.pdf"

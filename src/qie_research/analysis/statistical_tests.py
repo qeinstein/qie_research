@@ -254,71 +254,84 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
     datasets = [d for d in _DATASETS if any(r["dataset"] == d for r in best)]
     lookup = {(r["dataset"], r["qie_method"]): r for r in best}
 
-    n_ds = len(datasets)
+    # Split into two rows of 5 datasets each
+    split = len(datasets) // 2
+    panels = [datasets[:split], datasets[split:]]
+
     n_enc = len(encs)
-    group_w = 0.82
+    group_w = 0.78
     bar_w = group_w / n_enc
     offsets = np.linspace(-group_w / 2 + bar_w / 2, group_w / 2 - bar_w / 2, n_enc)
-    x = np.arange(n_ds)
-
-    fig, ax = plt.subplots(figsize=(15, 6))
-
-    for ei, enc in enumerate(encs):
-        ds_vals, ds_errs, ds_x = [], [], []
-        sig_xs, sig_ds = [], []
-        for di, ds in enumerate(datasets):
-            r = lookup.get((ds, enc))
-            if r is None:
-                continue
-            d = float(r["cohens_d"])
-            std_d = float(r["std_diff"]) if r["std_diff"] not in ("", 0, "0") else 0.0
-            ci_d = abs(float(r["ci95_diff"])) / std_d if std_d > 0 else 0.0
-            ds_vals.append(d)
-            ds_errs.append(ci_d)
-            ds_x.append(x[di] + offsets[ei])
-            if r["significant_t05"] == "yes":
-                sig_xs.append(x[di] + offsets[ei])
-                sig_ds.append((d, "**"))
-            elif r.get("significant_t10") == "yes":
-                sig_xs.append(x[di] + offsets[ei])
-                sig_ds.append((d, "~"))
-
-        ax.bar(ds_x, ds_vals, width=bar_w * 0.9,
-               color=enc_colors[enc], label=enc_labels[enc],
-               edgecolor="white", linewidth=0.8)
-        ax.errorbar(ds_x, ds_vals, yerr=ds_errs, fmt="none",
-                    ecolor="black", elinewidth=1.0, capsize=2.5, zorder=4)
-
-        # Significance markers above/below each bar
-        y_pad = 0.18
-        for bx, (d, marker) in zip(sig_xs, sig_ds):
-            ypos = d + (y_pad if d >= 0 else -y_pad)
-            va = "bottom" if d >= 0 else "top"
-            ax.text(bx, ypos, marker, ha="center", va=va, fontsize=9, color="#222222")
-
-    ax.axhline(0, color="black", lw=1.2)
-    ax.axhline(-0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
-    ax.axhline(0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels([dataset_labels.get(d, d) for d in datasets],
-                       ha="center", multialignment="center")
-    ax.set_ylabel(r"Cohen's $d$  (QIE $-$ best classical)", labelpad=8)
-    ax.set_title("Effect sizes: QIE vs. best classical baseline per dataset",
-                 fontsize=12, pad=10)
-    ax.grid(axis="y", alpha=0.2, linewidth=0.6)
 
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
-    legend_els = [Patch(color=enc_colors[e], label=enc_labels[e]) for e in encs]
-    legend_els.append(
-        Line2D([0], [0], color="gray", ls="--", lw=0.7, label=r"$|d|=0.2$ threshold")
-    )
-    ax.legend(handles=legend_els, loc="lower left", framealpha=0.9, fontsize=11)
-    ax.text(0.99, 0.02, "$**$ $p<0.05$,  $\\sim$ $p<0.10$ (paired $t$-test)",
-            transform=ax.transAxes, ha="right", va="bottom", fontsize=10, color="#333333")
 
-    fig.tight_layout(pad=1.5)
+    fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharey=False)
+
+    panel_labels = ["(a)", "(b)"]
+
+    for panel_idx, (ax, panel_ds) in enumerate(zip(axes, panels)):
+        x = np.arange(len(panel_ds))
+
+        for ei, enc in enumerate(encs):
+            ds_vals, ds_errs, ds_x = [], [], []
+            sig_xs, sig_ds = [], []
+            for di, ds in enumerate(panel_ds):
+                r = lookup.get((ds, enc))
+                if r is None:
+                    continue
+                d = float(r["cohens_d"])
+                std_d = float(r["std_diff"]) if r["std_diff"] not in ("", 0, "0") else 0.0
+                ci_d = abs(float(r["ci95_diff"])) / std_d if std_d > 0 else 0.0
+                ds_vals.append(d)
+                ds_errs.append(ci_d)
+                ds_x.append(x[di] + offsets[ei])
+                if r["significant_t05"] == "yes":
+                    sig_xs.append(x[di] + offsets[ei])
+                    sig_ds.append((d, "**"))
+                elif r.get("significant_t10") == "yes":
+                    sig_xs.append(x[di] + offsets[ei])
+                    sig_ds.append((d, "~"))
+
+            ax.bar(ds_x, ds_vals, width=bar_w * 0.9,
+                   color=enc_colors[enc], label=enc_labels[enc],
+                   edgecolor="white", linewidth=0.8)
+            ax.errorbar(ds_x, ds_vals, yerr=ds_errs, fmt="none",
+                        ecolor="black", elinewidth=1.0, capsize=3.0, zorder=4)
+
+            y_pad = 0.18
+            for bx, (d, marker) in zip(sig_xs, sig_ds):
+                ypos = d + (y_pad if d >= 0 else -y_pad)
+                va = "bottom" if d >= 0 else "top"
+                ax.text(bx, ypos, marker, ha="center", va=va, fontsize=10, color="#222222")
+
+        ax.axhline(0, color="black", lw=1.2)
+        ax.axhline(-0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
+        ax.axhline(0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
+        ax.set_xticks(x)
+        ax.set_xticklabels([dataset_labels.get(d, d) for d in panel_ds],
+                           ha="center", multialignment="center")
+        ax.set_ylabel(r"Cohen's $d$  (QIE $-$ best classical)", labelpad=8)
+        ax.grid(axis="y", alpha=0.25, linewidth=0.7)
+        ax.text(0.01, 0.97, panel_labels[panel_idx], transform=ax.transAxes,
+                fontsize=13, fontweight="bold", va="top")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        # Legend and note only on first panel
+        if panel_idx == 0:
+            legend_els = [Patch(color=enc_colors[e], label=enc_labels[e]) for e in encs]
+            legend_els.append(
+                Line2D([0], [0], color="gray", ls="--", lw=0.9, label=r"$|d|=0.2$ threshold")
+            )
+            ax.legend(handles=legend_els, loc="lower left", framealpha=0.9, fontsize=11)
+            ax.set_title("Effect sizes: QIE vs. best classical baseline per dataset",
+                         fontsize=14, pad=10)
+
+        ax.text(0.99, 0.02, "$**$ $p<0.05$,  $\\sim$ $p<0.10$ (paired $t$-test)",
+                transform=ax.transAxes, ha="right", va="bottom", fontsize=10, color="#333333")
+
+    fig.tight_layout(pad=2.0, h_pad=3.0)
     p = fig_dir / "forest_plot.pdf"
     fig.savefig(p, bbox_inches="tight")
     plt.close(fig)

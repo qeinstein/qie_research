@@ -227,12 +227,12 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
 
     matplotlib.rcParams.update({
         "font.family": "serif",
-        "font.size": 11,
-        "axes.labelsize": 11,
-        "axes.titlesize": 12,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 10,
+        "font.size": 12,
+        "axes.labelsize": 13,
+        "axes.titlesize": 14,
+        "xtick.labelsize": 11,
+        "ytick.labelsize": 11,
+        "legend.fontsize": 11,
         "axes.spines.top": False,
         "axes.spines.right": False,
     })
@@ -256,12 +256,12 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
 
     n_ds = len(datasets)
     n_enc = len(encs)
-    group_w = 0.7          # total width allocated per dataset group
+    group_w = 0.82
     bar_w = group_w / n_enc
     offsets = np.linspace(-group_w / 2 + bar_w / 2, group_w / 2 - bar_w / 2, n_enc)
     x = np.arange(n_ds)
 
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(15, 6))
 
     for ei, enc in enumerate(encs):
         ds_vals, ds_errs, ds_x = [], [], []
@@ -283,22 +283,22 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
                 sig_xs.append(x[di] + offsets[ei])
                 sig_ds.append((d, "~"))
 
-        ax.bar(ds_x, ds_vals, width=bar_w * 0.88,
+        ax.bar(ds_x, ds_vals, width=bar_w * 0.9,
                color=enc_colors[enc], label=enc_labels[enc],
-               edgecolor="white", linewidth=0.3)
+               edgecolor="white", linewidth=0.8)
         ax.errorbar(ds_x, ds_vals, yerr=ds_errs, fmt="none",
-                    ecolor="black", elinewidth=0.6, capsize=1.5, zorder=4)
+                    ecolor="black", elinewidth=1.0, capsize=2.5, zorder=4)
 
         # Significance markers above/below each bar
-        y_pad = 0.15
+        y_pad = 0.18
         for bx, (d, marker) in zip(sig_xs, sig_ds):
             ypos = d + (y_pad if d >= 0 else -y_pad)
             va = "bottom" if d >= 0 else "top"
-            ax.text(bx, ypos, marker, ha="center", va=va, fontsize=7.5, color="#444444")
+            ax.text(bx, ypos, marker, ha="center", va=va, fontsize=9, color="#222222")
 
-    ax.axhline(0, color="black", lw=0.9)
-    ax.axhline(-0.2, color="gray", lw=0.7, ls="--", alpha=0.5)
-    ax.axhline(0.2, color="gray", lw=0.7, ls="--", alpha=0.5)
+    ax.axhline(0, color="black", lw=1.2)
+    ax.axhline(-0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
+    ax.axhline(0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
 
     ax.set_xticks(x)
     ax.set_xticklabels([dataset_labels.get(d, d) for d in datasets],
@@ -314,9 +314,9 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
     legend_els.append(
         Line2D([0], [0], color="gray", ls="--", lw=0.7, label=r"$|d|=0.2$ threshold")
     )
-    ax.legend(handles=legend_els, loc="lower left", framealpha=0.9, fontsize=10)
+    ax.legend(handles=legend_els, loc="lower left", framealpha=0.9, fontsize=11)
     ax.text(0.99, 0.02, "$**$ $p<0.05$,  $\\sim$ $p<0.10$ (paired $t$-test)",
-            transform=ax.transAxes, ha="right", va="bottom", fontsize=9, color="#444444")
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=10, color="#333333")
 
     fig.tight_layout(pad=1.5)
     p = fig_dir / "forest_plot.pdf"

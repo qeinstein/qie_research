@@ -310,7 +310,7 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
                 ax.text(bx, ypos, marker, ha="center", va=va, fontsize=10, color="#222222")
 
             for bx, d in zip(neg_xs, neg_ds):
-                ax.text(bx, 10, "negl.", ha="center", va="top", fontsize=7.5,
+                ax.text(bx, -5, "negl.", ha="center", va="top", fontsize=7.5,
                         color="black", fontweight="bold", rotation=-90, clip_on=False)
 
         ax.axhline(0, color="black", lw=1.2)

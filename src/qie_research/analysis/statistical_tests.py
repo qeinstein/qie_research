@@ -310,14 +310,9 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
                 ax.text(bx, ypos, marker, ha="center", va=va, fontsize=10, color="#222222")
 
             for bx, d in zip(neg_xs, neg_ds):
-                # place text just inside the bar tip so it stays on the chart
-                if d >= 0:
-                    ypos = max(d - 0.02, 0.01)
-                    va = "top"
-                else:
-                    ypos = min(d + 0.02, -0.01)
-                    va = "bottom"
-                ax.text(bx, ypos, "negl.", ha="center", va=va, fontsize=7.5,
+                # anchor at 0 so text grows in the same direction as the bar
+                va = "bottom" if d >= 0 else "top"
+                ax.text(bx, 0, "negl.", ha="center", va=va, fontsize=7.5,
                         color="black", fontstyle="italic", rotation=90, clip_on=True)
 
         ax.axhline(0, color="black", lw=1.2)

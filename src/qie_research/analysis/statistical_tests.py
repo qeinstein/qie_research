@@ -263,13 +263,10 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
     bar_w = group_w / n_enc
     offsets = np.linspace(-group_w / 2 + bar_w / 2, group_w / 2 - bar_w / 2, n_enc)
 
-    Y_MIN = -10.0   # clip axis here; bars beyond are truncated and annotated
-    Y_MAX = 1.5
-
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
 
-    fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharey=True)
+    fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharey=False)
 
     panel_labels = ["(a)", "(b)"]
 
@@ -277,10 +274,9 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
         x = np.arange(len(panel_ds))
 
         for ei, enc in enumerate(encs):
-            ds_vals_plot, ds_errs, ds_x = [], [], []
+            ds_vals, ds_errs, ds_x = [], [], []
             sig_xs, sig_ds = [], []
-            trunc_xs, trunc_vals = [], []   # bars clipped at Y_MIN
-
+            neg_xs, neg_ds = [], []
             for di, ds in enumerate(panel_ds):
                 r = lookup.get((ds, enc))
                 if r is None:
@@ -288,46 +284,40 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
                 d = float(r["cohens_d"])
                 std_d = float(r["std_diff"]) if r["std_diff"] not in ("", 0, "0") else 0.0
                 ci_d = abs(float(r["ci95_diff"])) / std_d if std_d > 0 else 0.0
-                bx = x[di] + offsets[ei]
-                clipped = d < Y_MIN
-                plot_d = max(d, Y_MIN)
-                ds_vals_plot.append(plot_d)
-                ds_errs.append(0.0 if clipped else ci_d)
-                ds_x.append(bx)
-                if clipped:
-                    trunc_xs.append(bx)
-                    trunc_vals.append(d)
-                elif r["significant_t05"] == "yes":
-                    sig_xs.append(bx)
-                    sig_ds.append((plot_d, "**"))
+                ds_vals.append(d)
+                ds_errs.append(ci_d)
+                ds_x.append(x[di] + offsets[ei])
+                if r["significant_t05"] == "yes":
+                    sig_xs.append(x[di] + offsets[ei])
+                    sig_ds.append((d, "**"))
                 elif r.get("significant_t10") == "yes":
-                    sig_xs.append(bx)
-                    sig_ds.append((plot_d, "~"))
+                    sig_xs.append(x[di] + offsets[ei])
+                    sig_ds.append((d, "~"))
+                if r["effect_size_label"] == "negligible":
+                    neg_xs.append(x[di] + offsets[ei])
+                    neg_ds.append(d)
 
-            ax.bar(ds_x, ds_vals_plot, width=bar_w * 0.9,
+            ax.bar(ds_x, ds_vals, width=bar_w * 0.9,
                    color=enc_colors[enc], label=enc_labels[enc],
                    edgecolor="white", linewidth=0.8)
-            ax.errorbar(ds_x, ds_vals_plot, yerr=ds_errs, fmt="none",
+            ax.errorbar(ds_x, ds_vals, yerr=ds_errs, fmt="none",
                         ecolor="black", elinewidth=1.0, capsize=3.0, zorder=4)
 
-            # Significance markers
             y_pad = 0.18
             for bx, (d, marker) in zip(sig_xs, sig_ds):
                 ypos = d + (y_pad if d >= 0 else -y_pad)
                 va = "bottom" if d >= 0 else "top"
                 ax.text(bx, ypos, marker, ha="center", va=va, fontsize=10, color="#222222")
 
-            # Truncation markers: downward arrow + actual value
-            for bx, d in zip(trunc_xs, trunc_vals):
-                ax.annotate("", xy=(bx, Y_MIN + 0.3), xytext=(bx, Y_MIN + 1.0),
-                            arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.2))
-                ax.text(bx, Y_MIN + 0.15, f"{d:.0f}", ha="center", va="top",
-                        fontsize=7.5, color="#555555", rotation=90)
+            for bx, d in zip(neg_xs, neg_ds):
+                ypos = d + (0.05 if d >= 0 else -0.05)
+                va = "bottom" if d >= 0 else "top"
+                ax.text(bx, ypos, "negl.", ha="center", va=va, fontsize=7.5,
+                        color=enc_colors[enc], fontstyle="italic", rotation=90)
 
         ax.axhline(0, color="black", lw=1.2)
         ax.axhline(-0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
         ax.axhline(0.2, color="gray", lw=0.9, ls="--", alpha=0.6)
-        ax.set_ylim(Y_MIN, Y_MAX)
         ax.set_xticks(x)
         ax.set_xticklabels([dataset_labels.get(d, d) for d in panel_ds],
                            ha="center", multialignment="center")
@@ -338,6 +328,7 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
+        # Legend and note only on first panel
         if panel_idx == 0:
             legend_els = [Patch(color=enc_colors[e], label=enc_labels[e]) for e in encs]
             legend_els.append(
@@ -347,10 +338,8 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
             ax.set_title("Effect sizes: QIE vs. best classical baseline per dataset",
                          fontsize=14, pad=10)
 
-        ax.text(0.99, 0.02,
-                "$**$ $p<0.05$,  $\\sim$ $p<0.10$ (paired $t$-test);  "
-                r"$\downarrow$ bar truncated, value shown",
-                transform=ax.transAxes, ha="right", va="bottom", fontsize=9, color="#333333")
+        ax.text(0.99, 0.02, "$**$ $p<0.05$,  $\\sim$ $p<0.10$ (paired $t$-test)",
+                transform=ax.transAxes, ha="right", va="bottom", fontsize=10, color="#333333")
 
     fig.tight_layout(pad=2.0, h_pad=3.0)
     p = fig_dir / "forest_plot.pdf"

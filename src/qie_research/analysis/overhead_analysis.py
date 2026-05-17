@@ -139,37 +139,67 @@ def _plot(rows: list[dict], summary: list[dict], fig_dir: Path) -> None:
         print("matplotlib not installed — skipping plots")
         return
 
+    matplotlib.rcParams.update({
+        "font.family": "serif",
+        "font.size": 11,
+        "axes.labelsize": 11,
+        "axes.titlesize": 12,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
+
     fig_dir.mkdir(parents=True, exist_ok=True)
+
+    method_labels = {
+        "amplitude": "Amplitude", "angle": "Angle", "basis": "Basis",
+        "raw_linear": "Raw linear", "rff": "RFF", "pca": "PCA",
+        "poly2": "Poly-2", "poly3": "Poly-3",
+    }
 
     methods = [r["method"] for r in summary if r.get("overhead_ratio_mean") != ""]
     ratios = [float(r["overhead_ratio_mean"]) for r in summary if r.get("overhead_ratio_mean") != ""]
-    colors = ["#e05c5c" if r["method_type"] == "qie" else "#5c7ee0"
+    colors = ["#c0392b" if r["method_type"] == "qie" else "#2471a3"
               for r in summary if r.get("overhead_ratio_mean") != ""]
+    method_display = [method_labels.get(m, m) for m in methods]
 
     # ---- Figure 1: overhead_ratio (encoding/total) per method ----
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    bars = ax.bar(methods, ratios, color=colors, edgecolor="white", linewidth=0.5)
+    fig, ax = plt.subplots(figsize=(9, 5))
+    bars = ax.bar(method_display, ratios, color=colors, edgecolor="white",
+                  linewidth=0.5, width=0.6)
     ax.axhline(0.5, color="black", ls="--", lw=0.8, alpha=0.4, label="50% threshold")
-    ax.set_ylabel("Encoding time / total time")
-    ax.set_title("Encoding overhead fraction (mean across datasets)\n"
-                 "Red = QIE   Blue = classical baseline")
-    ax.set_ylim(0, max(ratios) * 1.25)
+    ax.set_ylabel("Encoding time / total pipeline time", labelpad=8)
+    ax.set_title("Encoding overhead fraction (mean across datasets)", pad=10)
+    ax.set_ylim(0, max(ratios) * 1.3)
     ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1))
+    ax.tick_params(axis="x", rotation=20)
     for bar, val in zip(bars, ratios):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.005,
-                f"{val*100:.1f}%", ha="center", va="bottom", fontsize=8)
-    ax.grid(axis="y", alpha=0.25)
-    fig.tight_layout()
-    p = fig_dir / "overhead_ratio.png"
-    fig.savefig(p, dpi=150)
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.008,
+                f"{val*100:.1f}%", ha="center", va="bottom", fontsize=9)
+    from matplotlib.patches import Patch
+    ax.legend(handles=[
+        Patch(color="#c0392b", label="QIE"),
+        Patch(color="#2471a3", label="Classical baseline"),
+        plt.Line2D([0], [0], color="black", ls="--", lw=0.8, label="50% threshold"),
+    ], framealpha=0.9, fontsize=10)
+    ax.grid(axis="y", alpha=0.2, linewidth=0.6)
+    fig.tight_layout(pad=1.5)
+    p = fig_dir / "overhead_ratio.pdf"
+    fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved {p}")
 
     # ---- Figure 2: per-dataset overhead_ratio heatmap (methods × datasets) ----
-    datasets = [d for d in _DATASET_ORDER
-                if any(r["dataset"] == d for r in rows)]
-    present_methods = [m for m in _SKLEARN_METHODS
-                       if any(r["method"] == m for r in rows)]
+    dataset_labels = {
+        "wine": "Wine", "breast_cancer": "Breast\nCancer", "dry_bean": "Dry Bean",
+        "credit_card_fraud": "Credit\nFraud", "fashion_mnist": "Fashion-\nMNIST",
+        "cifar10": "CIFAR-10", "higgs": "HIGGS", "high_dim_parity": "Parity",
+        "high_rank_noise": "High-Rank\nNoise", "covertype": "Covertype",
+    }
+    datasets = [d for d in _DATASET_ORDER if any(r["dataset"] == d for r in rows)]
+    present_methods = [m for m in _SKLEARN_METHODS if any(r["method"] == m for r in rows)]
 
     matrix = np.full((len(present_methods), len(datasets)), np.nan)
     for r in rows:
@@ -180,26 +210,25 @@ def _plot(rows: list[dict], summary: list[dict], fig_dir: Path) -> None:
         if mi >= 0 and di >= 0:
             matrix[mi, di] = float(r["overhead_ratio_mean"])
 
-    fig, ax = plt.subplots(figsize=(11, 4))
+    fig, ax = plt.subplots(figsize=(13, 5))
     im = ax.imshow(matrix, aspect="auto", cmap="YlOrRd", vmin=0, vmax=1)
     ax.set_xticks(range(len(datasets)))
-    ax.set_xticklabels([d.replace("_", "\n") for d in datasets], fontsize=8)
+    ax.set_xticklabels([dataset_labels.get(d, d) for d in datasets], fontsize=9)
     ax.set_yticks(range(len(present_methods)))
-    ax.set_yticklabels(present_methods, fontsize=9)
+    ax.set_yticklabels([method_labels.get(m, m) for m in present_methods], fontsize=10)
     for i in range(len(present_methods)):
         for j in range(len(datasets)):
             v = matrix[i, j]
             if not np.isnan(v):
                 ax.text(j, i, f"{v*100:.0f}%", ha="center", va="center",
-                        fontsize=7, color="black" if v < 0.6 else "white")
-    plt.colorbar(im, ax=ax, label="encoding / total time", fraction=0.02, pad=0.01)
-    ax.set_title("Encoding overhead fraction per (method, dataset)")
-    # Separator line between QIE and classical
+                        fontsize=8.5, color="black" if v < 0.6 else "white")
+    plt.colorbar(im, ax=ax, label="Encoding / total time", fraction=0.02, pad=0.02)
+    ax.set_title("Encoding overhead fraction per method and dataset", pad=10)
     n_qie = sum(1 for m in present_methods if m in _QIE)
     ax.axhline(n_qie - 0.5, color="white", lw=2)
-    fig.tight_layout()
-    p = fig_dir / "overhead_heatmap.png"
-    fig.savefig(p, dpi=150)
+    fig.tight_layout(pad=1.5)
+    p = fig_dir / "overhead_heatmap.pdf"
+    fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved {p}")
 
@@ -207,21 +236,24 @@ def _plot(rows: list[dict], summary: list[dict], fig_dir: Path) -> None:
     mem_methods = [r["method"] for r in summary if r.get("encoding_peak_mb_mean") not in ("", None, 0)]
     mem_vals = [float(r["encoding_peak_mb_mean"]) for r in summary
                 if r.get("encoding_peak_mb_mean") not in ("", None, 0)]
-    mem_colors = ["#e05c5c" if r["method_type"] == "qie" else "#5c7ee0"
+    mem_colors = ["#c0392b" if r["method_type"] == "qie" else "#2471a3"
                   for r in summary if r.get("encoding_peak_mb_mean") not in ("", None, 0)]
 
     if mem_methods:
-        fig, ax = plt.subplots(figsize=(8, 4))
-        bars = ax.bar(mem_methods, mem_vals, color=mem_colors, edgecolor="white", linewidth=0.5)
-        ax.set_ylabel("Peak encoding memory (MB, mean across datasets)")
-        ax.set_title("Peak encoding memory\nRed = QIE   Blue = classical baseline")
+        fig, ax = plt.subplots(figsize=(9, 5))
+        mem_display = [method_labels.get(m, m) for m in mem_methods]
+        bars = ax.bar(mem_display, mem_vals, color=mem_colors, edgecolor="white",
+                      linewidth=0.5, width=0.6)
+        ax.set_ylabel("Peak encoding memory (MB, mean across datasets)", labelpad=8)
+        ax.set_title("Peak encoding memory per method", pad=10)
+        ax.tick_params(axis="x", rotation=20)
         for bar, val in zip(bars, mem_vals):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
-                    f"{val:.2f}", ha="center", va="bottom", fontsize=8)
-        ax.grid(axis="y", alpha=0.25)
-        fig.tight_layout()
-        p = fig_dir / "overhead_memory.png"
-        fig.savefig(p, dpi=150)
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1,
+                    f"{val:.0f}", ha="center", va="bottom", fontsize=9)
+        ax.grid(axis="y", alpha=0.2, linewidth=0.6)
+        fig.tight_layout(pad=1.5)
+        p = fig_dir / "overhead_memory.pdf"
+        fig.savefig(p, bbox_inches="tight")
         plt.close(fig)
         print(f"  Saved {p}")
 

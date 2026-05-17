@@ -252,11 +252,33 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
         print("matplotlib not installed — skipping plots")
         return
 
+    matplotlib.rcParams.update({
+        "font.family": "serif",
+        "font.size": 11,
+        "axes.labelsize": 11,
+        "axes.titlesize": 12,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
+
     fig_dir.mkdir(parents=True, exist_ok=True)
-    colors = {"amplitude": "#e05c5c", "angle": "#5c7ee0", "basis": "#5cb85c"}
+    colors = {"amplitude": "#c0392b", "angle": "#2471a3", "basis": "#1e8449"}
     markers = {"amplitude": "s", "angle": "o", "basis": "^"}
 
-    def _scatter(ax, key_x: str, key_y: str) -> None:
+    dataset_labels = {
+        "wine": "Wine", "breast_cancer": "Breast Cancer", "dry_bean": "Dry Bean",
+        "credit_card_fraud": "Credit Fraud", "fashion_mnist": "Fashion-MNIST",
+        "cifar10": "CIFAR-10", "higgs": "HIGGS", "high_dim_parity": "Parity",
+        "high_rank_noise": "High-Rank Noise", "covertype": "Covertype",
+    }
+
+    def _scatter(ax, key_x: str, key_y: str, log_x: bool = False,
+                 ylim: tuple | None = None) -> None:
+        """Plot scatter and return list of (x, y, label) for all points."""
+        all_points = []
         for enc in _QIE:
             xs, ys, labs = [], [], []
             for r in rows:
@@ -267,57 +289,79 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
                     continue
                 xs.append(float(x))
                 ys.append(float(y))
-                labs.append(r["dataset"])
+                labs.append(dataset_labels.get(r["dataset"], r["dataset"]))
             if not xs:
                 continue
-            ax.scatter(xs, ys, c=colors[enc], marker=markers[enc], s=80,
-                       label=enc, zorder=3, edgecolors="white", linewidths=0.4)
-            for xi, yi, lab in zip(xs, ys, labs):
+            ax.scatter(xs, ys, c=colors[enc], marker=markers[enc], s=110,
+                       label=enc.capitalize(), zorder=3, edgecolors="white", linewidths=0.6)
+            all_points.extend(zip(xs, ys, labs))
+
+        # Determine visible y range for annotation clipping
+        y_lo, y_hi = (ylim if ylim else (None, None))
+
+        for idx, (xi, yi, lab) in enumerate(all_points):
+            clipped = ylim is not None and (yi < y_lo or yi > y_hi)
+            if clipped:
+                # Point is outside the visible window — draw a clipping marker on the axis edge
+                edge_y = y_lo if yi < y_lo else y_hi
+                ax.annotate("", xy=(xi, edge_y), xytext=(xi, edge_y + (0.012 if yi > y_hi else -0.012)),
+                            arrowprops=dict(arrowstyle="->", color="dimgray", lw=1.0))
+                ax.text(xi, edge_y - (0.022 if yi < y_lo else -0.022),
+                        f"{lab}\n({yi:.2f})", ha="center",
+                        va="top" if yi < y_lo else "bottom", fontsize=7, color="dimgray")
+            else:
+                dy = 6 if idx % 2 == 0 else -10
                 ax.annotate(lab, (xi, yi), textcoords="offset points",
-                            xytext=(4, 3), fontsize=6.5, alpha=0.8)
+                            xytext=(5, dy), fontsize=7.5, alpha=0.85,
+                            arrowprops=dict(arrowstyle="-", color="gray",
+                                            lw=0.4, shrinkA=0, shrinkB=3))
 
     # Figure 1: log₁₀(κ) vs accuracy gap vs best classical
-    fig, ax = plt.subplots(figsize=(7, 5))
-    _scatter(ax, "log10_kappa", "acc_gap_vs_best")
+    # y-axis is capped at -0.40 — one extreme outlier (amplitude/Dry Bean, gap=-0.67)
+    # sits outside the visible range and is labelled with a clipping arrow at the edge.
+    kappa_ylim = (-0.40, 0.05)
+    fig, ax = plt.subplots(figsize=(9, 6))
+    _scatter(ax, "log10_kappa", "acc_gap_vs_best", ylim=kappa_ylim)
+    ax.set_ylim(*kappa_ylim)
     ax.axhline(0, color="black", lw=0.8, ls="--", alpha=0.5)
-    ax.set_xlabel("log₁₀(κ) — condition number of encoded feature matrix")
-    ax.set_ylabel("Accuracy − best classical baseline")
-    ax.set_title("Spectral conditioning vs. QIE accuracy advantage")
-    ax.legend(framealpha=0.9)
-    ax.grid(True, alpha=0.25)
-    fig.tight_layout()
-    p = fig_dir / "spectral_kappa_vs_gap.png"
-    fig.savefig(p, dpi=150)
+    ax.set_xlabel(r"$\log_{10}(\kappa)$ — condition number of encoded feature matrix", labelpad=8)
+    ax.set_ylabel("Accuracy gap vs. best classical baseline", labelpad=8)
+    ax.set_title("Spectral conditioning vs. QIE accuracy gap", pad=10)
+    ax.legend(framealpha=0.9, loc="upper right")
+    ax.grid(True, alpha=0.2, linewidth=0.6)
+    fig.tight_layout(pad=1.5)
+    p = fig_dir / "spectral_kappa_vs_gap.pdf"
+    fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved {p}")
 
     # Figure 2: effective rank vs accuracy_mean
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(9, 6))
     _scatter(ax, "erank", "accuracy_mean")
-    ax.set_xlabel("Effective rank (erank) of encoded feature matrix")
-    ax.set_ylabel("Test accuracy (mean, 5 seeds)")
-    ax.set_title("Feature-space effective rank vs. classification accuracy")
-    ax.legend(framealpha=0.9)
-    ax.grid(True, alpha=0.25)
-    fig.tight_layout()
-    p = fig_dir / "spectral_erank_vs_acc.png"
-    fig.savefig(p, dpi=150)
+    ax.set_xlabel("Effective rank ($\\mathrm{erank}$) of encoded feature matrix", labelpad=8)
+    ax.set_ylabel("Test accuracy (mean, 5 seeds)", labelpad=8)
+    ax.set_title("Feature-space effective rank vs. classification accuracy", pad=10)
+    ax.legend(framealpha=0.9, loc="upper left")
+    ax.grid(True, alpha=0.2, linewidth=0.6)
+    fig.tight_layout(pad=1.5)
+    p = fig_dir / "spectral_erank_vs_acc.pdf"
+    fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved {p}")
 
     # Figure 3: noise_delta vs accuracy gap (log x-scale)
-    fig, ax = plt.subplots(figsize=(7, 5))
-    _scatter(ax, "noise_delta", "acc_gap_vs_best")
+    fig, ax = plt.subplots(figsize=(9, 6))
+    _scatter(ax, "noise_delta", "acc_gap_vs_best", log_x=True)
     ax.axhline(0, color="black", lw=0.8, ls="--", alpha=0.5)
     ax.set_xscale("log")
-    ax.set_xlabel("Noise stability δ (log scale) — Frobenius dist per sample, ε ~ N(0, 0.01)")
-    ax.set_ylabel("Accuracy − best classical baseline")
-    ax.set_title("Noise sensitivity vs. QIE accuracy advantage")
-    ax.legend(framealpha=0.9)
-    ax.grid(True, alpha=0.25, which="both")
+    ax.set_xlabel(r"Noise stability $\delta$ (log scale) — Frobenius distance per sample, $\varepsilon \sim \mathcal{N}(0, 0.01)$", labelpad=8)
+    ax.set_ylabel("Accuracy gap vs. best classical baseline", labelpad=8)
+    ax.set_title("Noise sensitivity vs. QIE accuracy gap", pad=10)
+    ax.legend(framealpha=0.9, loc="upper left")
+    ax.grid(True, alpha=0.2, linewidth=0.6, which="both")
     fig.tight_layout()
-    p = fig_dir / "spectral_noise_vs_gap.png"
-    fig.savefig(p, dpi=150)
+    p = fig_dir / "spectral_noise_vs_gap.pdf"
+    fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved {p}")
 
@@ -330,7 +374,17 @@ def main() -> None:
     parser.add_argument("--configs-dir", type=Path, default=Path("configs"))
     parser.add_argument("--out", type=Path, default=Path("results/summary/spectral_attribution.csv"))
     parser.add_argument("--fig-dir", type=Path, default=Path("results/figures"))
+    parser.add_argument("--plots-only", action="store_true",
+                        help="Skip SVD recomputation; regenerate figures from existing CSV only.")
     args = parser.parse_args()
+
+    if args.plots_only:
+        if not args.out.exists():
+            sys.exit(f"--plots-only requires existing CSV at {args.out} — run without flag first.")
+        with open(args.out) as f:
+            rows = list(csv.DictReader(f))
+        _plot(rows, args.fig_dir)
+        return
 
     if not args.stats.exists():
         sys.exit(f"stats.csv not found at {args.stats} — run aggregate_results first")

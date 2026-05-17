@@ -225,46 +225,102 @@ def _plot(rows: list[dict], fig_dir: Path) -> None:
         print("matplotlib not installed — skipping plots")
         return
 
+    matplotlib.rcParams.update({
+        "font.family": "serif",
+        "font.size": 11,
+        "axes.labelsize": 11,
+        "axes.titlesize": 12,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
+
     fig_dir.mkdir(parents=True, exist_ok=True)
     best = [r for r in rows if r["comparison_type"] == "vs_best_classical"
             and r["cohens_d"] != ""]
 
-    # Sort by Cohen's d descending
-    best_sorted = sorted(best, key=lambda r: float(r["cohens_d"]), reverse=True)
+    dataset_labels = {
+        "wine": "Wine", "breast_cancer": "Breast\nCancer", "dry_bean": "Dry\nBean",
+        "credit_card_fraud": "Credit\nFraud", "fashion_mnist": "Fashion-\nMNIST",
+        "cifar10": "CIFAR-10", "higgs": "HIGGS", "high_dim_parity": "Parity",
+        "high_rank_noise": "High-Rank\nNoise", "covertype": "Covertype",
+    }
+    encs = ["amplitude", "angle", "basis"]
+    enc_colors = {"amplitude": "#c0392b", "angle": "#2471a3", "basis": "#1e8449"}
+    enc_labels = {"amplitude": "Amplitude", "angle": "Angle", "basis": "Basis"}
 
-    labels = [f"{r['dataset']} / {r['qie_method']}" for r in best_sorted]
-    ds = [float(r["cohens_d"]) for r in best_sorted]
-    # 95% CI on Cohen's d ≈ d ± t_crit/sqrt(n) (approximate)
-    errs = [abs(float(r["ci95_diff"])) / float(r["std_diff"])
-            if r["std_diff"] not in ("", 0) else 0.0
-            for r in best_sorted]
+    datasets = [d for d in _DATASETS if any(r["dataset"] == d for r in best)]
+    lookup = {(r["dataset"], r["qie_method"]): r for r in best}
 
-    colors_map = {"amplitude": "#e05c5c", "angle": "#5c7ee0", "basis": "#5cb85c"}
-    colors = [colors_map[r["qie_method"]] for r in best_sorted]
+    n_ds = len(datasets)
+    n_enc = len(encs)
+    group_w = 0.7          # total width allocated per dataset group
+    bar_w = group_w / n_enc
+    offsets = np.linspace(-group_w / 2 + bar_w / 2, group_w / 2 - bar_w / 2, n_enc)
+    x = np.arange(n_ds)
 
-    fig, ax = plt.subplots(figsize=(7, max(5, len(labels) * 0.35)))
-    y = np.arange(len(labels))
-    ax.barh(y, ds, color=colors, edgecolor="white", linewidth=0.4, height=0.6)
-    ax.axvline(0, color="black", lw=0.9, ls="-")
-    ax.axvline(-0.2, color="gray", lw=0.6, ls="--", alpha=0.5, label="|d|=0.2 (small)")
-    ax.axvline(0.2, color="gray", lw=0.6, ls="--", alpha=0.5)
+    fig, ax = plt.subplots(figsize=(12, 5))
 
-    # Mark significant results
-    for i, r in enumerate(best_sorted):
-        if r["significant_t05"] == "yes":
-            ax.text(ds[i] + (0.05 if ds[i] >= 0 else -0.05), i, "*",
-                    ha="left" if ds[i] >= 0 else "right", va="center", fontsize=11)
+    for ei, enc in enumerate(encs):
+        ds_vals, ds_errs, ds_x = [], [], []
+        sig_xs, sig_ds = [], []
+        for di, ds in enumerate(datasets):
+            r = lookup.get((ds, enc))
+            if r is None:
+                continue
+            d = float(r["cohens_d"])
+            std_d = float(r["std_diff"]) if r["std_diff"] not in ("", 0, "0") else 0.0
+            ci_d = abs(float(r["ci95_diff"])) / std_d if std_d > 0 else 0.0
+            ds_vals.append(d)
+            ds_errs.append(ci_d)
+            ds_x.append(x[di] + offsets[ei])
+            if r["significant_t05"] == "yes":
+                sig_xs.append(x[di] + offsets[ei])
+                sig_ds.append((d, "**"))
+            elif r.get("significant_t10") == "yes":
+                sig_xs.append(x[di] + offsets[ei])
+                sig_ds.append((d, "~"))
 
-    ax.set_yticks(y)
-    ax.set_yticklabels(labels, fontsize=8)
-    ax.set_xlabel("Cohen's d  (QIE − best classical, positive = QIE better)")
-    ax.set_title("Effect sizes: QIE vs best classical baseline\n"
-                 "Red=amplitude  Blue=angle  Green=basis   * p<0.05 paired t")
-    ax.legend(fontsize=8, loc="lower right")
-    ax.grid(axis="x", alpha=0.25)
-    fig.tight_layout()
-    p = fig_dir / "forest_plot.png"
-    fig.savefig(p, dpi=150)
+        ax.bar(ds_x, ds_vals, width=bar_w * 0.88,
+               color=enc_colors[enc], label=enc_labels[enc],
+               edgecolor="white", linewidth=0.3)
+        ax.errorbar(ds_x, ds_vals, yerr=ds_errs, fmt="none",
+                    ecolor="black", elinewidth=0.6, capsize=1.5, zorder=4)
+
+        # Significance markers above/below each bar
+        y_pad = 0.15
+        for bx, (d, marker) in zip(sig_xs, sig_ds):
+            ypos = d + (y_pad if d >= 0 else -y_pad)
+            va = "bottom" if d >= 0 else "top"
+            ax.text(bx, ypos, marker, ha="center", va=va, fontsize=7.5, color="#444444")
+
+    ax.axhline(0, color="black", lw=0.9)
+    ax.axhline(-0.2, color="gray", lw=0.7, ls="--", alpha=0.5)
+    ax.axhline(0.2, color="gray", lw=0.7, ls="--", alpha=0.5)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([dataset_labels.get(d, d) for d in datasets],
+                       ha="center", multialignment="center")
+    ax.set_ylabel(r"Cohen's $d$  (QIE $-$ best classical)", labelpad=8)
+    ax.set_title("Effect sizes: QIE vs. best classical baseline per dataset",
+                 fontsize=12, pad=10)
+    ax.grid(axis="y", alpha=0.2, linewidth=0.6)
+
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    legend_els = [Patch(color=enc_colors[e], label=enc_labels[e]) for e in encs]
+    legend_els.append(
+        Line2D([0], [0], color="gray", ls="--", lw=0.7, label=r"$|d|=0.2$ threshold")
+    )
+    ax.legend(handles=legend_els, loc="lower left", framealpha=0.9, fontsize=10)
+    ax.text(0.99, 0.02, "$**$ $p<0.05$,  $\\sim$ $p<0.10$ (paired $t$-test)",
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=9, color="#444444")
+
+    fig.tight_layout(pad=1.5)
+    p = fig_dir / "forest_plot.pdf"
+    fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved {p}")
 

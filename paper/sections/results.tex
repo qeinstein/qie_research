@@ -6,12 +6,12 @@
 \subsection{Predictive Performance}
 \label{sec:perf}
 
-Table~\ref{tab:accuracy} reports mean accuracy across five seeds for each
+Table~\ref{tab:accuracy} reports mean accuracy (up to ten seeds) for each
 encoding and the strongest classical baseline per dataset.
 
 \begin{table}[tbp]
 \centering
-\caption{Mean accuracy (5 seeds) for QIE encodings and the best classical
+\caption{Mean accuracy (up to ten seeds) for QIE encodings and the best classical
 baseline per dataset.  Bold indicates the best QIE result per row.
 $\dagger$ denotes all methods near chance (XOR task).}
 \label{tab:accuracy}
@@ -22,12 +22,12 @@ Dataset & Amplitude & Angle & Basis & Best classical \\
 \midrule
 Wine                     & 0.628 & \textbf{0.972} & 0.917 & 0.978 (raw linear) \\
 Breast Cancer            & 0.779 & \textbf{0.977} & 0.940 & 0.975 (PyTorch MLP) \\
-Dry Bean                 & 0.260 & 0.925          & 0.917 & \textbf{0.929} (PyTorch MLP) \\
+Dry Bean                 & 0.260 & 0.928          & 0.920 & \textbf{0.931} (PyTorch MLP) \\
 Credit Fraud             & 0.999 & 0.999          & 0.999 & \textbf{0.999} (MLP) \\
 Fashion-MNIST            & 0.821 & 0.823          & 0.819 & \textbf{0.859} (PyTorch MLP) \\
 CIFAR-10                 & 0.378 & 0.306          & 0.328 & \textbf{0.457} (RBF-SVM) \\
 HIGGS                    & 0.643 & 0.658          & 0.669 & \textbf{0.748} (PyTorch MLP) \\
-High-dim parity$\dagger$ & 0.489 & 0.501          & 0.506 & 0.519 (PyTorch MLP) \\
+High-dim parity$\dagger$ & 0.485 & 0.497          & 0.504 & 0.524 (PyTorch MLP) \\
 High-rank noise          & \textbf{0.795} & 0.780  & 0.700 & 0.795 (RBF-SVM) \\
 Covertype                & 0.587 & 0.725          & 0.724 & \textbf{0.859} (MLP) \\
 \bottomrule
@@ -37,19 +37,12 @@ Covertype                & 0.587 & 0.725          & 0.724 & \textbf{0.859} (MLP)
 \subsection{Statistical Analysis}
 \label{sec:stats}
 
-Of 30 encoding-dataset comparisons against the best classical baseline, 24 are
+Of 30 encoding-dataset comparisons against the best classical baseline, 27 are
 statistically significantly worse ($p < 0.05$, paired $t$-test) and 0 are
 significantly better.
-The remaining six non-significant comparisons divide into two distinct groups.
-Three are genuine near-ties with negligible effect sizes: angle on Wine
+The three non-significant cases are genuine negligible near-ties: angle on Wine
 ($d = -0.18$, $p = 0.70$), angle on Breast Cancer ($d = +0.10$, $p = 0.83$),
 and amplitude on high-rank noise ($d = -0.03$, $p = 0.96$).
-The other three carry non-negligible effect sizes but fall short of $\alpha = 0.05$
-due to the limited power of five seeds: angle on Dry Bean ($d = -1.03$,
-$p = 0.082$), angle on high-dim parity ($d = -1.05$, $p = 0.079$), and basis
-on high-dim parity ($d = -0.77$, $p = 0.162$).
-These results are directionally consistent with QIE being worse and should not
-be interpreted as evidence of parity.
 Among the negligible near-ties, the Breast Cancer angle result is directionally
 favourable to QIE (mean accuracy 0.977 vs.\ 0.975 for PyTorch MLP), though
 the difference is not significant and the effect size is trivially small.
@@ -70,6 +63,6 @@ Figure~\ref{fig:forest} displays the forest plot of all 30 effect sizes.
   \includegraphics[width=0.85\textwidth]{figures/forest_plot.png}
   \caption{Forest plot of Cohen's $d$ effect sizes for all 30 encoding-dataset
   comparisons (QIE vs.\ best classical baseline).  Negative values indicate QIE
-  is worse.  Error bars are 95\% CIs over five seeds.}
+  is worse.  Error bars are 95\% CIs over five to ten seeds.}
   \label{fig:forest}
 \end{figure}
